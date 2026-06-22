@@ -2,6 +2,21 @@
 
 Architecture decisions, newest first. Each: context → decision → consequences.
 
+## ADR-019 — Bundle Generator orchestrates a shared book pipeline
+**Context:** Generate several books from one topic without duplicating generator
+or orchestration code.
+**Decision:** Extract the single-book "generate + store" flow into
+`lib/books/pipeline.ts` (`planBook` + `generateAndStoreBook`) — the one place that
+calls the existing build* generators, metadata, storage, and DB inserts. Refactor
+`/api/books` to use it (now thin). The Bundle Generator (`/api/bundle`) uses the
+Opportunity Engine to recommend the best mix of the 4 puzzle/coloring types, then
+loops the SAME pipeline (with a `bundle_id`) — sequentially, per-book status,
+partial-success tolerant. Bundles tracked in `bundles` + `books.bundle_id`
+(migration `0008`); ZIP export zips each book's stored PDFs on demand.
+**Consequences:** Zero duplicate generator/orchestration code; `/api/books` and
+bundles share one tested path. Recommended composition + publishing order are
+data-driven from per-type fit. Ebook stays separate (its own pipeline).
+
 ## ADR-018 — Cover Generator: FLUX background + crisp typeset overlay
 **Context:** Need professional KDP covers for all book types. AI image models
 render garbled text, so titles can't come from the image itself.

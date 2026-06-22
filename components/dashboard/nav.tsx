@@ -8,6 +8,7 @@ const MAIN = [
   { href: "/dashboard", label: "Overview" },
   { href: "/dashboard/niche", label: "Niche Research" },
   { href: "/dashboard/create", label: "Create Book" },
+  { href: "/dashboard/bundle", label: "Bundle Generator" },
   { href: "/dashboard/cover", label: "Cover Generator" },
 ];
 

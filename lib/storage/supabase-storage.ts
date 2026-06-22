@@ -46,6 +46,14 @@ export async function putBookPdf(key: string, body: Uint8Array | Buffer): Promis
   return putBytes(key, body, "application/pdf");
 }
 
+/** Download an object's bytes (server-side, e.g. to bundle into a ZIP). */
+export async function getBytes(key: string): Promise<Uint8Array> {
+  const admin = getSupabaseAdminClient();
+  const { data, error } = await admin.storage.from(BUCKET).download(key);
+  if (error || !data) throw new Error(`Storage download failed: ${error?.message ?? "no data"}`);
+  return new Uint8Array(await data.arrayBuffer());
+}
+
 /** Create a short-lived signed download URL. */
 export async function getBookSignedUrl(
   key: string,

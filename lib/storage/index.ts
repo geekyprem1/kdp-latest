@@ -11,5 +11,6 @@ export {
   bookObjectKey,
   putBookPdf,
   putBytes,
+  getBytes,
   getBookSignedUrl,
 } from "./supabase-storage";

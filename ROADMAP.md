@@ -174,6 +174,11 @@ See [EBOOK_BLUEPRINT.md](EBOOK_BLUEPRINT.md). Re-sequenced to differentiate from
     saved; routes `POST /api/ebook`, `POST /api/ebook/[id]/chapter`,
     `GET /api/ebook/[id]/export`; editor at `/dashboard/ebook/[id]`
   - Verified live: 3-chapter ebook in ~19s, valid PDF/EPUB/DOCX + cover, rewrite works
+- **Bundle Generator** ✅ COMPLETE — one topic → multi-book bundle. Opportunity
+  Engine recommends the mix; the shared book pipeline (`lib/books/pipeline.ts`,
+  also now used by `/api/books`) generates each via the existing generators;
+  bundles (`bundles` + `books.bundle_id`, migration `0008`); ZIP + individual
+  export; data-driven recommended publishing order. No duplicate generator code.
 - **Cover Generator** ✅ COMPLETE (standalone) — `lib/cover/`: AI brief
   (OpenRouter) + FLUX background + crisp typeset overlay → 3 variations; smart
   per-type templates; library (`covers`, migration `0007`); Download PNG / Use
