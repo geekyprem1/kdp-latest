@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/supabase/server";
 import { DashboardNav } from "@/components/dashboard/nav";
@@ -21,7 +22,9 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-screen">
-      <DashboardNav email={email} />
+      <Suspense fallback={<div className="w-56 shrink-0 border-r border-neutral-200" />}>
+        <DashboardNav email={email} />
+      </Suspense>
       <main className="flex-1 p-8">{children}</main>
     </div>
   );

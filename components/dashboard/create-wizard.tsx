@@ -45,9 +45,25 @@ const field = "mt-1 w-full rounded border border-neutral-300 px-3 py-2 text-sm";
 const label = "block text-sm font-medium text-neutral-700";
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
+// Map the ?type= deep-link slug (from dedicated nav entries) to a BookType.
+const TYPE_SLUGS: Record<string, BookType> = {
+  "word-search": "word_search",
+  word_search: "word_search",
+  sudoku: "sudoku",
+  maze: "maze",
+  coloring: "coloring",
+  "coloring-book": "coloring",
+  ebook: "ebook",
+};
+const slugToType = (s: string | null): BookType | null => (s ? TYPE_SLUGS[s] ?? null : null);
+const defaultCount = (t: BookType | null) =>
+  t === "coloring" ? 24 : t === "word_search" ? 25 : t ? 30 : 25;
+
 export function CreateWizard() {
   const params = useSearchParams();
-  const [step, setStep] = useState(1);
+  // Dedicated generator entries deep-link with ?type= → preselect + jump to config.
+  const presetType = slugToType(params.get("type"));
+  const [step, setStep] = useState(presetType ? 4 : 1);
 
   // Step 1
   const [topic, setTopic] = useState(params.get("theme") ?? "");
@@ -58,10 +74,10 @@ export function CreateWizard() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
 
   // Step 3/4
-  const [bookType, setBookType] = useState<BookType | null>(null);
+  const [bookType, setBookType] = useState<BookType | null>(presetType);
   const [title, setTitle] = useState("");
   const [difficulty, setDifficulty] = useState("medium");
-  const [count, setCount] = useState(25);
+  const [count, setCount] = useState(defaultCount(presetType));
   const [ageGroup, setAgeGroup] = useState("kids");
   const [style, setStyle] = useState("cute");
   const [tone, setTone] = useState("friendly");
@@ -285,6 +301,14 @@ export function CreateWizard() {
         <div>
           <h2 className="text-lg font-semibold">4. Configure — {BOOK_TYPE_LABELS[bookType]}</h2>
           <div className="mt-4 space-y-4">
+            {/* Theme is needed for word search & coloring (used as the puzzle/art theme). */}
+            {(bookType === "word_search" || bookType === "coloring") && (
+              <div>
+                <label className={label}>Theme / topic</label>
+                <input className={field} value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="e.g. Dinosaurs, Space, Gardening" required />
+              </div>
+            )}
+
             <div><label className={label}>Book title (optional)</label><input className={field} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Leave blank to auto-generate" /></div>
 
             {(bookType === "word_search" || bookType === "sudoku" || bookType === "maze") && (
@@ -325,8 +349,12 @@ export function CreateWizard() {
           </div>
 
           <div className="mt-5 flex gap-3">
-            <button onClick={() => setStep(3)} className="rounded border border-neutral-300 px-4 py-2 text-sm">← Back</button>
-            <button onClick={generate} disabled={busy} className="rounded bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50">
+            <button onClick={() => setStep(analysis ? 3 : 1)} className="rounded border border-neutral-300 px-4 py-2 text-sm">← Back</button>
+            <button
+              onClick={generate}
+              disabled={busy || ((bookType === "word_search" || bookType === "coloring" || bookType === "ebook") && !topic.trim())}
+              className="rounded bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+            >
               {busy ? "Generating… (up to a few minutes)" : "Generate Book"}
             </button>
           </div>
