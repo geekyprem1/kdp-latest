@@ -91,11 +91,20 @@ metadata; without it, the app falls back to curated banks + template metadata.
 
 ## SaaS app (built — MVP)
 
-`/login` (Supabase: Google + email magic link) → `/dashboard` (Overview, Create,
-My Books, Download History). `POST /api/books` runs the full pipeline
-synchronously: AI word list → metadata → PDF (interior + cover) → upload to R2 →
-rows in `books`/`book_metadata`. `GET /api/books/[id]/download?part=` checks
-ownership, signs an R2 URL, logs the download. Auth gating in `proxy.ts`.
+`/login` (Supabase: Google + email magic link) → `/dashboard` (Overview, Niche
+Research, Create, My Books, Download History). Auth gating in `proxy.ts`.
+
+**Unified Create wizard** (`components/dashboard/create-wizard.tsx`) — 4 steps:
+Topic → Opportunity analysis (`POST /api/opportunity` → `lib/ai/analyzeTopic`,
+shared `lib/opportunity` engine) → Choose Type (Recommended/Good/Not-Recommended
+badges from per-type fit) → dynamic Configure → Generate. The opportunity result
+is saved as a snapshot on the book (`books.opportunity`). Storybook shows
+"Coming Soon"; Ebook is configurable now and generates in Phase 9.
+
+`POST /api/books` runs each puzzle/coloring pipeline synchronously: content →
+metadata → PDF (interior + cover) → upload to storage → rows in
+`books`/`book_metadata` (+ opportunity snapshot). `GET /api/books/[id]/download`
+checks ownership, signs a storage URL, logs the download.
 
 ## Folder structure
 

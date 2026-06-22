@@ -153,7 +153,12 @@ See [EBOOK_BLUEPRINT.md](EBOOK_BLUEPRINT.md). Re-sequenced to differentiate from
   recommended book types incl. ebook); Niche Research repointed to it;
   `books.opportunity` snapshot column (migration `0005`); `npm run test:opportunity`
   (6/6). Inline-in-Create wiring lands with Phase 7.
-- **Phase 7 — Unified Create wizard** (one 4-step flow for all types) ⏳
+- **Phase 7 — Unified Create wizard** ✅ COMPLETE — one 4-step flow (Topic →
+  Opportunity analysis → Choose Type w/ Recommended/Good/Not-Recommended badges →
+  dynamic Configure → Generate). New `POST /api/opportunity` (single-topic
+  analysis via `lib/ai/analyzeTopic`); opportunity snapshot saved on every book
+  (`books.opportunity`); Ebook selectable + configurable (generation returns
+  "coming next"); Storybook shown as Coming Soon. Reuses all generators + engine.
 - **Phase 8 — Async infra** (`generation_jobs` + Trigger.dev) ⏳
 - **Phase 9 — Ebook Creator** (outline → chapter writer + rewrite/expand →
   quality gate → PDF/EPUB/DOCX → cover generator) ⏳

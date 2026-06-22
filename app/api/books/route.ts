@@ -82,6 +82,18 @@ export async function POST(req: NextRequest) {
           : "word_search";
   const userTitle = typeof body.title === "string" ? body.title.trim() : "";
 
+  // Ebook Creator ships in the next phase — accept the request but don't generate.
+  if (body.bookType === "ebook") {
+    return NextResponse.json({
+      comingSoon: true,
+      message: "Ebook Creator launches in the next phase. Your configuration is ready for it.",
+    });
+  }
+
+  // Opportunity snapshot from the Create wizard (stored on the book).
+  const opportunity =
+    body.opportunity && typeof body.opportunity === "object" ? body.opportunity : null;
+
   // ── plan the build per type ──
   let plan: BuildPlan;
 
@@ -234,6 +246,7 @@ export async function POST(req: NextRequest) {
         trim_size: "8.5x11",
         word_source: plan.wordSource,
         config: plan.config,
+        opportunity,
       })
       .select("id")
       .single();

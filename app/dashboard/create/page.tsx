@@ -1,12 +1,12 @@
 import { Suspense } from "react";
-import { CreateBookForm } from "@/components/dashboard/create-form";
+import { CreateWizard } from "@/components/dashboard/create-wizard";
 
 export const dynamic = "force-dynamic";
 
 export default function CreatePage() {
   return (
     <Suspense fallback={null}>
-      <CreateBookForm />
+      <CreateWizard />
     </Suspense>
   );
 }

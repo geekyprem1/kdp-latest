@@ -2,6 +2,21 @@
 
 Architecture decisions, newest first. Each: context → decision → consequences.
 
+## ADR-016 — Unified Create wizard + opportunity snapshot
+**Context:** Each book type had ad-hoc fields in one toggle form; opportunity
+scoring lived only in standalone Niche Research. We want one opportunity-first
+create flow for all types (the differentiator from a "KDP Master" clone).
+**Decision:** A 4-step wizard (Topic → Opportunity → Type → Configure → Generate).
+A new `POST /api/opportunity` does **single-topic** analysis (`lib/ai/analyzeTopic`)
+returning the four factors + computed Opportunity + per-type fit; Step 3 turns fit
+into Recommended/Good/Not-Recommended badges (`recommendationBadge`). The analysis
+is stored as a snapshot on the book (`books.opportunity`, from migration 0005).
+Ebook is fully configurable now but `/api/books` returns `comingSoon` for it until
+Phase 9; Storybook is shown as Coming Soon. Analysis has a neutral fallback so the
+wizard works even if AI is down (with a Skip-analysis path).
+**Consequences:** One flow, all types; every book carries why-it-should-sell data.
+Generators/engine reused unchanged. Sets up the Ebook slot for Phase 9.
+
 ## ADR-015 — Shared Book Opportunity Engine
 **Context:** Niche scoring was niche-specific (`lib/niche/score.ts`, 5 factors incl.
 expansion/kdpSuitability). The product strategy needs one reusable engine for both

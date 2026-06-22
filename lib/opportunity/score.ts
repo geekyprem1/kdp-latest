@@ -42,6 +42,21 @@ export function factorLabel(value: number): "Low" | "Medium" | "High" {
   return "Low";
 }
 
+export type RecommendationBadge = "Recommended" | "Good" | "Not Recommended";
+
+/** Map a book-type fit (0–100) to a recommendation badge. */
+export function recommendationBadge(fit: number): RecommendationBadge {
+  if (fit >= 70) return "Recommended";
+  if (fit >= 40) return "Good";
+  return "Not Recommended";
+}
+
+export const BADGE_COLORS: Record<RecommendationBadge, { bg: string; fg: string }> = {
+  Recommended: { bg: "#dcfce7", fg: "#166534" },
+  Good: { bg: "#fef9c3", fg: "#854d0e" },
+  "Not Recommended": { bg: "#f3f4f6", fg: "#6b7280" },
+};
+
 /** Band colors reused by UI + PDF. */
 export const BAND_COLORS: Record<OpportunityBand, { bg: string; fg: string }> = {
   Excellent: { bg: "#dcfce7", fg: "#166534" },
