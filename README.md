@@ -84,11 +84,12 @@ npm run examples:generate
 npm run examples:validate
 ```
 
-## ✅ Gate success criteria
+## ✅ Gate success criteria — PASSED
 
-1. `gate:verify` passes (geometry). — **automated, currently passing**
-2. **Upload both PDFs to Amazon KDP and confirm the previewer accepts them with
-   no errors.** — **manual, authoritative. This is the real gate.**
+1. `gate:verify` passes (geometry). — **automated, passing**
+2. **Amazon KDP Print Previewer accepts the interior + cover with no errors.** —
+   ✅ **validated** on the 8.5×11 word search books (Approve enabled). The PDF
+   engine is KDP-compliant.
 
 ### Manual KDP validation steps
 

@@ -8,15 +8,15 @@
 - Supabase clients + Cloudflare R2 client
 - Production defaults (`lib/config/defaults.ts`)
 
-## PDF Engine Gate ✅ COMPLETE (pending Amazon KDP validation)
+## PDF Engine Gate ✅ COMPLETE — KDP-VALIDATED
 
 - KDP spec engine (`lib/pdf/kdp-specs.ts`): trim, bleed, gutter, spine
 - Interior + cover templates, Puppeteer renderer
 - `npm run gate:generate` + `npm run gate:verify`
-- Geometry verification: **passing** (6×9, 100pp; fonts embedded)
-- ⏳ **Remaining:** human uploads `output/interior-6x9.pdf` + `output/cover-6x9.pdf`
-  to KDP and confirms Launch Previewer acceptance. This is the authoritative
-  sign-off; everything below assumes it passes.
+- Geometry verification: **passing**; fonts embedded
+- ✅ **Validated on Amazon KDP Print Previewer** (8.5×11 word search books):
+  cover + interior accepted with no errors, **Approve** enabled. The earlier
+  "text/object outside the margins" rejection was fixed (footer position, ADR-008).
 
 Milestone tag: **`v0.1-pdf-gate`**
 
@@ -34,12 +34,12 @@ Validated: deterministic across runs, 0 skipped placements (longest-first),
 interior exactly 8.5×11, fonts embedded, real HTTP path renders via Puppeteer in
 the Next server. Run `npm run ws:generate` for the CLI check.
 
-> ⏳ As with all printed output, the authoritative final check is a KDP previewer
-> upload of a generated word-search interior + cover.
+> ✅ KDP-validated: generated word-search interiors + covers pass the KDP Print
+> Previewer with no errors.
 
 **Sample books** — 3 production-quality books (Dinosaur / Halloween / Christmas,
-83pp, 8.5×11, no-bleed) generated in `examples/`, all passing automated KDP
-validation. Ready for KDP upload testing. `npm run examples:generate` /
+83pp, 8.5×11, no-bleed) in `examples/`, passing automated checks **and the live
+KDP Print Previewer** (Approve enabled). `npm run examples:generate` /
 `examples:validate`.
 
 No Sudoku, Maze, Coloring, Billing, Stripe, Templates, or Admin was started —
