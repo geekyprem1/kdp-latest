@@ -15,7 +15,9 @@
     "examples:generate": "tsx scripts/generate-examples.ts",
     "examples:validate": "tsx scripts/validate-examples.ts",
     "test:sudoku": "tsx scripts/test-sudoku.ts",
-    "test:maze": "tsx scripts/test-maze.ts"
+    "test:maze": "tsx scripts/test-maze.ts",
+    "test:coloring": "tsx scripts/test-coloring.ts",
+    "coloring:samples": "tsx scripts/generate-coloring-samples.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1073.0",
@@ -23,11 +25,13 @@
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.108.2",
     "next": "^16.2.9",
+    "pngjs": "^7.0.0",
     "react": "19.0.0",
     "react-dom": "19.0.0"
   },
   "devDependencies": {
     "@types/node": "22.10.7",
+    "@types/pngjs": "^6.0.5",
     "@types/react": "19.0.7",
     "@types/react-dom": "19.0.3",
     "autoprefixer": "10.4.20",

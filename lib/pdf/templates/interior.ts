@@ -18,6 +18,8 @@ export interface InteriorPageContent {
   html: string;
   /** Set false to suppress the footer page number (e.g. title page). */
   showPageNumber?: boolean;
+  /** Edge-to-edge page (no margins, no folio) — e.g. full-bleed coloring art. */
+  fullBleed?: boolean;
 }
 
 function pageDiv(
@@ -28,15 +30,20 @@ function pageDiv(
   const isRecto = (pageIndex + 1) % 2 === 1; // page 1 is recto
   const left = isRecto ? spec.marginInsideIn : spec.marginOutsideIn;
   const right = isRecto ? spec.marginOutsideIn : spec.marginInsideIn;
-  const showNum = content.showPageNumber ?? true;
-  // Sit the folio clearly inside the bottom safe margin (not on the line).
+  // Full-bleed pages (coloring art) fill the whole page edge-to-edge: no padding,
+  // no page number.
+  const fullBleed = content.fullBleed ?? false;
+  const showNum = !fullBleed && (content.showPageNumber ?? true);
   const folioBottom = spec.marginBottomIn + 0.15;
+  const padding = fullBleed
+    ? "0"
+    : `${spec.marginTopIn}in ${right}in ${spec.marginBottomIn}in ${left}in`;
 
   return `
     <section class="page" style="
       width:${spec.pageWidthIn}in;
       height:${spec.pageHeightIn}in;
-      padding:${spec.marginTopIn}in ${right}in ${spec.marginBottomIn}in ${left}in;
+      padding:${padding};
     ">
       <div class="content">${content.html}</div>
       ${

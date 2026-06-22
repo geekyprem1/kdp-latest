@@ -7,7 +7,7 @@
 import { generateJson } from "./provider";
 import { isAiConfigured } from "./models";
 
-export type MetadataBookType = "word_search" | "sudoku" | "maze";
+export type MetadataBookType = "word_search" | "sudoku" | "maze" | "coloring";
 
 export interface BookMetadata {
   title: string;
@@ -41,6 +41,25 @@ function templateMetadata(opts: MetadataInput): BookMetadata {
         "sudoku puzzles with answers",
         "brain games",
         "puzzle book gift",
+      ],
+      generatedBy: "template",
+    };
+  }
+
+  if (opts.bookType === "coloring") {
+    const t = opts.theme ?? "Themed";
+    return {
+      title: `${cap(t)} Coloring Book`,
+      subtitle: `${opts.puzzleCount} Fun Coloring Pages for ${cap(opts.difficulty)}`,
+      description: `A ${t.toLowerCase()} coloring book with ${opts.puzzleCount} single-sided pages of bold, easy-to-color line art for ${opts.difficulty}. Hours of creative, screen-free fun — printable, with thick outlines and clean white backgrounds.`,
+      keywords: [
+        `${t.toLowerCase()} coloring book`,
+        "coloring book for kids",
+        "coloring book for adults",
+        "line art coloring book",
+        "activity book",
+        "coloring pages",
+        "coloring book gift",
       ],
       generatedBy: "template",
     };
@@ -83,6 +102,17 @@ function templateMetadata(opts: MetadataInput): BookMetadata {
 }
 
 function promptFor(opts: MetadataInput): string {
+  if (opts.bookType === "coloring") {
+    return `Write Amazon KDP metadata for a coloring book.
+Theme: "${opts.theme}". Pages: ${opts.puzzleCount}. Audience: ${opts.difficulty}. Black-and-white line art, bold outlines, printable.
+Return JSON of the exact shape:
+{
+  "title": string,           // catchy, includes the theme
+  "subtitle": string,        // mentions page count and audience
+  "description": string,     // 2 short paragraphs, benefit-driven, no markdown
+  "keywords": string[]       // exactly 7 KDP search keyword phrases
+}`;
+  }
   if (opts.bookType === "maze") {
     return `Write Amazon KDP metadata for a maze puzzle book.
 Difficulty: ${opts.difficulty}. Maze count: ${opts.puzzleCount}. Each maze has one clear path from start to finish, with full solutions.

@@ -114,9 +114,30 @@ Third generator, matching Word Search / Sudoku quality, reusing the KDP PDF engi
 
 No new DB migration (reuses `books`/`book_metadata`/`downloads`).
 
+## Phase 5 — Coloring Book Generator ✅ COMPLETE
+
+First AI-image book type. Bleed-enabled (edge-to-edge art).
+
+- [x] "Coloring Book" added to Create Book flow (other types unchanged)
+- [x] Inputs: theme, age group, page count, style
+- [x] AI image pipeline: **Replicate FLUX Schnell** (`lib/generators/coloring/image.ts`),
+  deterministic by seed; offline placeholder fallback when no token
+- [x] Prompt builder bakes in line-art constraints (B/W, thick outlines, no
+  shading/grayscale, white background, printable)
+- [x] Image validation: rejects gray backgrounds, filled-black regions, color,
+  and shading (pixel analysis via pngjs), with retry
+- [x] Full-bleed coloring pages (`fullBleed` interior pages, bleed = on)
+- [x] Book structure: title → coloring pages → end page
+- [x] Metadata via OpenRouter; storage + download reused
+- [x] Validation suite: `npm run test:coloring` — 8/8 passing (offline)
+
+> Real AI sample books need `REPLICATE_API_TOKEN`: `npm run coloring:samples`
+> generates Dinosaur / Unicorn / Halloween. (Image DPI is bounded by FLUX
+> Schnell's ~1MP output — fine for line art; upscaling is a future enhancement.)
+
 ## Later
 
-- Phase 5 — Planners
+- Phase 6 — Planners
 - Phase 6 — Coloring Books (Replicate FLUX; **enables bleed by default for this type**)
 - Phase 7 — Trigger.dev async jobs (for image-heavy generation)
 - Phase 8 — Billing (Stripe + JVZoo/W+), credits, OTO gating

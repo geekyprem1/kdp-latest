@@ -2,6 +2,28 @@
 
 Architecture decisions, newest first. Each: context → decision → consequences.
 
+## ADR-014 — Coloring: FLUX line art with pixel validation + bleed
+**Context:** Coloring Books are the first AI-image book type and need clean,
+printable black-and-white line art that fills the page.
+**Decisions:**
+- **Replicate FLUX Schnell** for images (HTTP API, no SDK), seeded for
+  reproducibility. Constraints (no shading/grayscale/color, white background,
+  thick outlines) are baked into the positive prompt — FLUX Schnell has no
+  negative-prompt param. Subjects per page come from OpenRouter (fallback to
+  numbered subjects).
+- **Pixel validation** (pngjs): reject gray backgrounds, large filled-black
+  regions, color, and grayscale shading; retry up to 3× per page, then accept
+  best effort flagged invalid.
+- **Bleed = on** for coloring (the only type), via a `fullBleed` interior page
+  (no margins/folio, image `object-fit: cover`). Page size = trim + bleed.
+- **Offline placeholder** line art when `REPLICATE_API_TOKEN` is unset, so the
+  whole pipeline (validation, PDF, tests) runs without API access or cost.
+**Consequences:** Verified offline (`npm run test:coloring`, 8/8). Real sample
+books need the token (`npm run coloring:samples`). Cover reused (no new cover
+generator). DPI is bounded by FLUX Schnell (~1MP) — acceptable for line art;
+upscaling is a later enhancement. Generation is synchronous for now; image-heavy
+books are the motivation to move to Trigger.dev async later.
+
 ## ADR-013 — Maze: recursive-backtracking perfect mazes
 **Context:** Maze books need solvable mazes with a single clear path, generated
 deterministically.

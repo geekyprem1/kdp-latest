@@ -19,6 +19,14 @@ import {
   MAZE_DIFFICULTIES,
   type MazeDifficulty,
 } from "@/lib/generators/maze";
+import {
+  buildColoringBook,
+  MIN_COLORING_PAGES,
+  COLORING_AGE_GROUPS,
+  COLORING_STYLES,
+  type ColoringAgeGroup,
+  type ColoringStyle,
+} from "@/lib/generators/coloring";
 import { generateWordList, generateMetadata } from "@/lib/ai";
 import type { InteriorResult, CoverResult } from "@/lib/pdf";
 
@@ -35,7 +43,7 @@ function clamp(n: unknown, min: number, max: number, fallback: number): number {
 }
 
 interface BuildPlan {
-  bookType: "word_search" | "sudoku" | "maze";
+  bookType: "word_search" | "sudoku" | "maze" | "coloring";
   theme: string;
   title: string;
   difficulty: string;
@@ -65,13 +73,56 @@ export async function POST(req: NextRequest) {
   }
 
   const bookType =
-    body.bookType === "sudoku" ? "sudoku" : body.bookType === "maze" ? "maze" : "word_search";
+    body.bookType === "sudoku"
+      ? "sudoku"
+      : body.bookType === "maze"
+        ? "maze"
+        : body.bookType === "coloring"
+          ? "coloring"
+          : "word_search";
   const userTitle = typeof body.title === "string" ? body.title.trim() : "";
 
   // ── plan the build per type ──
   let plan: BuildPlan;
 
-  if (bookType === "maze") {
+  if (bookType === "coloring") {
+    const theme = typeof body.theme === "string" ? body.theme.trim() : "";
+    if (!theme) return NextResponse.json({ error: "Theme is required" }, { status: 400 });
+    const ageGroup: ColoringAgeGroup = COLORING_AGE_GROUPS.includes(body.ageGroup as ColoringAgeGroup)
+      ? (body.ageGroup as ColoringAgeGroup)
+      : "kids";
+    const style: ColoringStyle = COLORING_STYLES.includes(body.style as ColoringStyle)
+      ? (body.style as ColoringStyle)
+      : "cute";
+    const pageCount = clamp(body.puzzleCount, MIN_COLORING_PAGES, 40, 24);
+    const metadata = await generateMetadata({
+      bookType: "coloring",
+      theme,
+      puzzleCount: pageCount,
+      difficulty: ageGroup,
+    });
+    const title = userTitle || metadata.title;
+    plan = {
+      bookType,
+      theme,
+      title,
+      difficulty: ageGroup,
+      puzzleCount: pageCount,
+      wordSource: null,
+      config: { ageGroup, style },
+      metadata,
+      build: () =>
+        buildColoringBook({
+          theme,
+          title,
+          subtitle: metadata.subtitle,
+          ageGroup,
+          style,
+          pageCount,
+          backText: metadata.description,
+        }),
+    };
+  } else if (bookType === "maze") {
     const difficulty: MazeDifficulty = MAZE_DIFFICULTIES.includes(body.difficulty as MazeDifficulty)
       ? (body.difficulty as MazeDifficulty)
       : "medium";
