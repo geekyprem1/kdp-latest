@@ -2,6 +2,20 @@
 
 Architecture decisions, newest first. Each: context → decision → consequences.
 
+## ADR-008 — Page-number footer must sit inside the safe margin
+**Context:** Amazon KDP's Print Previewer rejected the first sample-book upload
+with "text outside the margins" and "object outside the margins" on the interior
+puzzle pages.
+**Decision:** The page-number footer (folio) was absolutely positioned in the
+bottom margin (bottom = ½ the margin) and spanned the full width past the gutter
+margin on recto pages. Reposition it inside the safe area: bottom = margin + 0.15in,
+and left/right bound to the page's actual (mirrored) margins. Verified with a
+debug overlay (`scripts/debug-margins.ts`) that draws the KDP safe box over a
+rendered page.
+**Consequences:** Folio is comfortably inside the margins on both recto and verso.
+The grid, title, and word list were already well within margins. Re-validate any
+KDP rejection visually with the overlay before re-uploading.
+
 ## ADR-007 — Production defaults: 8.5×11, no-bleed, puzzle types
 **Context:** Moving from the gate sample (6×9) toward production generation.
 **Decision:** Default trim **8.5×11**, **no bleed**, book types Word Search /

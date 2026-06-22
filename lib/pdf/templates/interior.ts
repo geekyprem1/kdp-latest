@@ -29,6 +29,8 @@ function pageDiv(
   const left = isRecto ? spec.marginInsideIn : spec.marginOutsideIn;
   const right = isRecto ? spec.marginOutsideIn : spec.marginInsideIn;
   const showNum = content.showPageNumber ?? true;
+  // Sit the folio clearly inside the bottom safe margin (not on the line).
+  const folioBottom = spec.marginBottomIn + 0.15;
 
   return `
     <section class="page" style="
@@ -39,7 +41,7 @@ function pageDiv(
       <div class="content">${content.html}</div>
       ${
         showNum
-          ? `<div class="folio" style="text-align:${isRecto ? "right" : "left"}">${pageIndex + 1}</div>`
+          ? `<div class="folio" style="left:${left}in;right:${right}in;bottom:${folioBottom}in;text-align:${isRecto ? "right" : "left"}">${pageIndex + 1}</div>`
           : ""
       }
     </section>`;
@@ -70,10 +72,9 @@ export function renderInteriorHtml(
   .page:last-child { page-break-after: auto; break-after: auto; }
   .content { width: 100%; height: 100%; }
   .folio {
+    /* left/right/bottom are set inline per page so the folio always sits inside
+       the safe margin on the correct (recto/verso) side. */
     position: absolute;
-    bottom: ${spec.marginBottomIn / 2}in;
-    left: ${spec.marginOutsideIn}in;
-    right: ${spec.marginOutsideIn}in;
     font-size: 10pt;
     color: #555;
   }
