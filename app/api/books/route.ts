@@ -13,6 +13,12 @@ import {
   SUDOKU_DIFFICULTIES,
   type SudokuDifficulty,
 } from "@/lib/generators/sudoku";
+import {
+  buildMazeBook,
+  MIN_MAZES,
+  MAZE_DIFFICULTIES,
+  type MazeDifficulty,
+} from "@/lib/generators/maze";
 import { generateWordList, generateMetadata } from "@/lib/ai";
 import type { InteriorResult, CoverResult } from "@/lib/pdf";
 
@@ -29,7 +35,7 @@ function clamp(n: unknown, min: number, max: number, fallback: number): number {
 }
 
 interface BuildPlan {
-  bookType: "word_search" | "sudoku";
+  bookType: "word_search" | "sudoku" | "maze";
   theme: string;
   title: string;
   difficulty: string;
@@ -58,13 +64,39 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const bookType = body.bookType === "sudoku" ? "sudoku" : "word_search";
+  const bookType =
+    body.bookType === "sudoku" ? "sudoku" : body.bookType === "maze" ? "maze" : "word_search";
   const userTitle = typeof body.title === "string" ? body.title.trim() : "";
 
   // ── plan the build per type ──
   let plan: BuildPlan;
 
-  if (bookType === "sudoku") {
+  if (bookType === "maze") {
+    const difficulty: MazeDifficulty = MAZE_DIFFICULTIES.includes(body.difficulty as MazeDifficulty)
+      ? (body.difficulty as MazeDifficulty)
+      : "medium";
+    const mazeCount = clamp(body.puzzleCount, MIN_MAZES, 100, 30);
+    const metadata = await generateMetadata({ bookType: "maze", puzzleCount: mazeCount, difficulty });
+    const title = userTitle || metadata.title;
+    plan = {
+      bookType,
+      theme: "Maze",
+      title,
+      difficulty,
+      puzzleCount: mazeCount,
+      wordSource: null,
+      config: {},
+      metadata,
+      build: () =>
+        buildMazeBook({
+          title,
+          subtitle: metadata.subtitle,
+          difficulty,
+          mazeCount,
+          backText: metadata.description,
+        }),
+    };
+  } else if (bookType === "sudoku") {
     const difficulty: SudokuDifficulty = SUDOKU_DIFFICULTIES.includes(
       body.difficulty as SudokuDifficulty
     )

@@ -97,9 +97,25 @@ Second generator, matching Word Search quality, reusing the KDP PDF engine.
 
 No new DB migration (reuses `books`/`book_metadata`/`downloads`).
 
+## Phase 4 — Maze Generator ✅ COMPLETE
+
+Third generator, matching Word Search / Sudoku quality, reusing the KDP PDF engine.
+
+- [x] "Maze" added to Create Book flow (Word Search + Sudoku unchanged)
+- [x] 4 difficulties (Easy/Medium/Hard/Expert) by grid size (12→30)
+- [x] Deterministic recursive-backtracking ("perfect maze" → exactly one path)
+- [x] Solvable by construction; BFS-verified solution; START (top-left) /
+  FINISH (bottom-right) openings clearly marked
+- [x] Book structure: title → instructions → mazes → solutions → end page
+- [x] Solution pages overlay the solved path (SVG)
+- [x] Metadata via OpenRouter (book-type aware); storage + download reused
+- [x] Validation suite: `npm run test:maze` (determinism, solvability, path
+  correctness, min page count, PDF generation) — 5/5 passing
+
+No new DB migration (reuses `books`/`book_metadata`/`downloads`).
+
 ## Later
 
-- Phase 4 — Maze generator
 - Phase 5 — Planners
 - Phase 6 — Coloring Books (Replicate FLUX; **enables bleed by default for this type**)
 - Phase 7 — Trigger.dev async jobs (for image-heavy generation)

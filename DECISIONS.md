@@ -2,6 +2,19 @@
 
 Architecture decisions, newest first. Each: context → decision → consequences.
 
+## ADR-013 — Maze: recursive-backtracking perfect mazes
+**Context:** Maze books need solvable mazes with a single clear path, generated
+deterministically.
+**Decision:** Generate via iterative recursive-backtracking (a "perfect maze" —
+a spanning tree), so exactly one path connects any two cells; START is top-left,
+FINISH is bottom-right with open border cells. The solution is found by BFS and
+rendered as an SVG overlay. Difficulty = grid size (12→30). Reuses the shared
+PRNG for determinism.
+**Consequences:** Every maze is solvable with one valid path by construction
+(asserted at generation and in `npm run test:maze`). SVG keeps mazes crisp at any
+print size. PDF/storage/download/metadata layers reused; `/api/books` and the
+Create UI gained a third book type. Word Search + Sudoku unchanged.
+
 ## ADR-012 — Sudoku: dig-with-uniqueness-invariant generation
 **Context:** Sudoku books must have valid puzzles, each with exactly one solution,
 generated deterministically.

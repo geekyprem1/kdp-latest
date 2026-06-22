@@ -7,7 +7,7 @@
 import { generateJson } from "./provider";
 import { isAiConfigured } from "./models";
 
-export type MetadataBookType = "word_search" | "sudoku";
+export type MetadataBookType = "word_search" | "sudoku" | "maze";
 
 export interface BookMetadata {
   title: string;
@@ -46,6 +46,24 @@ function templateMetadata(opts: MetadataInput): BookMetadata {
     };
   }
 
+  if (opts.bookType === "maze") {
+    return {
+      title: "Maze Puzzle Book",
+      subtitle: `${opts.puzzleCount} ${cap(opts.difficulty)} Mazes with Solutions`,
+      description: `Wind your way through ${opts.puzzleCount} ${opts.difficulty} mazes, each with one clear path from start to finish and a full solution at the back. A fun, screen-free activity book that builds focus and patience — with large, easy-to-follow grids.`,
+      keywords: [
+        "maze puzzle book",
+        `${opts.difficulty} mazes`,
+        "mazes for adults",
+        "mazes for kids",
+        "large print maze book",
+        "activity book",
+        "puzzle book gift",
+      ],
+      generatedBy: "template",
+    };
+  }
+
   const t = opts.theme ?? "Themed";
   return {
     title: `${t} Word Search`,
@@ -65,6 +83,17 @@ function templateMetadata(opts: MetadataInput): BookMetadata {
 }
 
 function promptFor(opts: MetadataInput): string {
+  if (opts.bookType === "maze") {
+    return `Write Amazon KDP metadata for a maze puzzle book.
+Difficulty: ${opts.difficulty}. Maze count: ${opts.puzzleCount}. Each maze has one clear path from start to finish, with full solutions.
+Return JSON of the exact shape:
+{
+  "title": string,           // catchy maze book title
+  "subtitle": string,        // mentions maze count, difficulty, and solutions
+  "description": string,     // 2 short paragraphs, benefit-driven, no markdown
+  "keywords": string[]       // exactly 7 KDP search keyword phrases
+}`;
+  }
   if (opts.bookType === "sudoku") {
     return `Write Amazon KDP metadata for a sudoku puzzle book.
 Difficulty: ${opts.difficulty}. Puzzle count: ${opts.puzzleCount}. Every puzzle has one unique solution and a full answer key.

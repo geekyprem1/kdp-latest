@@ -4,13 +4,24 @@ import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-type BookType = "word_search" | "sudoku";
+type BookType = "word_search" | "sudoku" | "maze";
 
 const DIFFICULTIES: Record<BookType, string[]> = {
   word_search: ["easy", "medium", "hard"],
   sudoku: ["easy", "medium", "hard", "expert"],
+  maze: ["easy", "medium", "hard", "expert"],
 };
-const MIN_PUZZLES: Record<BookType, number> = { word_search: 11, sudoku: 10 };
+const MIN_PUZZLES: Record<BookType, number> = { word_search: 11, sudoku: 10, maze: 10 };
+const TYPE_LABELS: Record<BookType, string> = {
+  word_search: "Word Search",
+  sudoku: "Sudoku",
+  maze: "Maze",
+};
+const COUNT_LABELS: Record<BookType, string> = {
+  word_search: "Puzzles",
+  sudoku: "Puzzles",
+  maze: "Mazes",
+};
 
 interface Result {
   id: string;
@@ -33,8 +44,8 @@ export function CreateBookForm() {
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // pages: word search = 2N+3, sudoku = 2N+4
-  const approxPages = bookType === "sudoku" ? 2 * puzzleCount + 4 : 2 * puzzleCount + 3;
+  // pages: word search = 2N+3; sudoku & maze = 2N+4
+  const approxPages = bookType === "word_search" ? 2 * puzzleCount + 3 : 2 * puzzleCount + 4;
 
   const field = "mt-1 w-full rounded border border-neutral-300 px-3 py-2 text-sm";
   const label = "block text-sm font-medium text-neutral-700";
@@ -73,7 +84,7 @@ export function CreateBookForm() {
   }
 
   if (result) {
-    const typeLabel = result.bookType === "sudoku" ? "Sudoku" : "Word Search";
+    const typeLabel = TYPE_LABELS[result.bookType] ?? "Book";
     return (
       <div className="mx-auto max-w-xl">
         <div className="rounded-lg border border-green-300 bg-green-50 p-6">
@@ -123,8 +134,8 @@ export function CreateBookForm() {
       </p>
 
       {/* Book type toggle */}
-      <div className="mt-5 grid grid-cols-2 gap-3">
-        {(["word_search", "sudoku"] as BookType[]).map((t) => (
+      <div className="mt-5 grid grid-cols-3 gap-3">
+        {(["word_search", "sudoku", "maze"] as BookType[]).map((t) => (
           <button
             key={t}
             type="button"
@@ -135,7 +146,7 @@ export function CreateBookForm() {
                 : "border-neutral-300 text-neutral-700 hover:bg-neutral-50"
             }`}
           >
-            {t === "word_search" ? "Word Search" : "Sudoku"}
+            {TYPE_LABELS[t]}
           </button>
         ))}
       </div>
@@ -180,11 +191,13 @@ export function CreateBookForm() {
             </select>
           </div>
           <div>
-            <label className={label}>Puzzles ({approxPages} pages)</label>
+            <label className={label}>
+              {COUNT_LABELS[bookType]} ({approxPages} pages)
+            </label>
             <input
               type="number"
               min={MIN_PUZZLES[bookType]}
-              max={bookType === "sudoku" ? 100 : 50}
+              max={bookType === "word_search" ? 50 : 100}
               className={field}
               value={puzzleCount}
               onChange={(e) => setPuzzleCount(Number(e.target.value))}
