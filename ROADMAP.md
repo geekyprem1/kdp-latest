@@ -80,9 +80,25 @@ Find profitable KDP niches before generating books.
 DB: `0004_niche_reports.sql`. Verified live: Gemini returned 20 scored, sorted
 ideas in ~14s.
 
+## Phase 3 — Sudoku Generator ✅ COMPLETE
+
+Second generator, matching Word Search quality, reusing the KDP PDF engine.
+
+- [x] "Sudoku" added to Create Book flow (Word Search unchanged)
+- [x] 4 difficulties (Easy/Medium/Hard/Expert) by clue count
+- [x] Deterministic (seed → identical puzzle) + **guaranteed unique solution**
+  (clues removed only while uniqueness holds; solver-verified)
+- [x] Book structure: title → instructions → puzzles → solutions → end page
+- [x] Solution pages (givens bold, answers gray)
+- [x] Metadata via OpenRouter (generalized for book type)
+- [x] Storage + download flow reused (Supabase / R2-ready)
+- [x] Validation suite: `npm run test:sudoku` (determinism, uniqueness, solution
+  correctness, min page count, PDF generation) — 6/6 passing
+
+No new DB migration (reuses `books`/`book_metadata`/`downloads`).
+
 ## Later
 
-- Phase 3 — Sudoku generator (reuse pipeline; solver-verified)
 - Phase 4 — Maze generator
 - Phase 5 — Planners
 - Phase 6 — Coloring Books (Replicate FLUX; **enables bleed by default for this type**)

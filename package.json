@@ -13,7 +13,8 @@
     "gate:verify": "tsx scripts/verify-pdf.ts",
     "ws:generate": "tsx scripts/generate-word-search.ts",
     "examples:generate": "tsx scripts/generate-examples.ts",
-    "examples:validate": "tsx scripts/validate-examples.ts"
+    "examples:validate": "tsx scripts/validate-examples.ts",
+    "test:sudoku": "tsx scripts/test-sudoku.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1073.0",

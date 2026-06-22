@@ -14,6 +14,7 @@ AI-powered Amazon KDP book creation platform.
 |---|---|---|
 | PDF Engine | ✅ KDP-validated | `lib/pdf/` — 8.5×11 interior + wraparound cover |
 | Word Search generator | ✅ | `lib/generators/word-search/` — deterministic, solution keys |
+| Sudoku generator | ✅ | `lib/generators/sudoku/` — deterministic, unique-solution, 4 difficulties (`npm run test:sudoku`) |
 | Auth | ✅ | Supabase (Google + email magic link), `proxy.ts` gating `/dashboard` |
 | Dashboard | ✅ | Overview, Niche Research, Create Book, My Books, Download History |
 | Niche Research | ✅ | AI → 20 scored niches, opportunity score, recommendations, save, PDF export, one-click generate |

@@ -2,6 +2,19 @@
 
 Architecture decisions, newest first. Each: context → decision → consequences.
 
+## ADR-012 — Sudoku: dig-with-uniqueness-invariant generation
+**Context:** Sudoku books must have valid puzzles, each with exactly one solution,
+generated deterministically.
+**Decision:** Build a full solved grid via seeded backtracking, then remove clues
+one at a time, keeping a clue only if the puzzle still has exactly one solution
+(`countSolutions(…, limit=2) === 1`, MRV solver). Difficulty = target clue count
+(easy 40 → expert 26). The full grid is the guaranteed-unique solution.
+Generation reuses the shared PRNG (`lib/util/prng.ts`) so seed → identical puzzle.
+**Consequences:** Every emitted puzzle is valid + uniquely solvable by construction
+(also asserted at generation time and in `npm run test:sudoku`). The PDF engine,
+storage, download, and metadata layers are reused unchanged; `generateMetadata`
+gained a `bookType` param and `/api/books` branches on type.
+
 ## ADR-011 — Niche scoring: AI estimates factors, app computes the score
 **Context:** Niche Research needs a 0–100 opportunity score across several factors.
 **Decision:** The AI returns only raw 0–100 factor estimates (demand, competition,
