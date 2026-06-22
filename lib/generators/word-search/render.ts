@@ -61,18 +61,22 @@ function gridTable(
     </table>`;
 }
 
-function wordList(words: string[], columns = 3): string {
+function wordList(words: string[], widthIn: number, columns = 3): string {
   if (words.length === 0) return "";
   const sorted = [...words].sort();
   const items = sorted.map((w) => `<li>${w}</li>`).join("");
+  // Match the grid's width and center the block so the word list lines up under
+  // the grid instead of spilling out to the left.
   return `
     <ul style="
       columns:${columns};
+      column-gap:0.3in;
       list-style:none;
       padding:0;
-      margin:0.1in 0.2in;
+      margin:0.12in auto 0;
+      max-width:${widthIn}in;
       font-size:11pt;
-      line-height:1.6;
+      line-height:1.7;
       letter-spacing:0.02em;
     ">${items}</ul>`;
 }
@@ -80,12 +84,14 @@ function wordList(words: string[], columns = 3): string {
 /** Puzzle page body (grid + word list to find). */
 export function renderPuzzleBody(puzzle: WordSearchPuzzle, index: number): string {
   const words = puzzle.words.map((w) => w.word);
+  const { cellIn } = gridGeometry(puzzle.size);
+  const gridWidthIn = cellIn * puzzle.size;
   return `
     <h2 style="text-align:center;margin-bottom:0.05in">Puzzle ${index + 1}</h2>
     <p style="text-align:center;color:#666;margin:0 0 0.1in">Theme: ${puzzle.theme} &middot; ${puzzle.difficulty}</p>
     ${gridTable(puzzle, {})}
     <p style="text-align:center;font-weight:bold;margin:0.15in 0 0">Find these words:</p>
-    ${wordList(words)}`;
+    ${wordList(words, gridWidthIn)}`;
 }
 
 /** Solution page body (grid with answers highlighted, fillers dimmed). */
