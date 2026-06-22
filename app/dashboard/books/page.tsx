@@ -7,6 +7,7 @@ interface BookRow {
   id: string;
   title: string;
   theme: string;
+  book_type: string;
   status: string;
   difficulty: string;
   puzzle_count: number;
@@ -58,7 +59,21 @@ export default async function MyBooksPage() {
                 <StatusBadge status={b.status} />
               </div>
 
-              {b.status === "completed" && (
+              {b.status === "completed" && b.book_type === "ebook" && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Link
+                    href={`/dashboard/ebook/${b.id}`}
+                    className="rounded bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white"
+                  >
+                    Open Editor
+                  </Link>
+                  <a href={`/api/ebook/${b.id}/export?format=pdf`} className="rounded border border-neutral-900 px-3 py-1.5 text-xs font-medium">PDF</a>
+                  <a href={`/api/ebook/${b.id}/export?format=epub`} className="rounded border border-neutral-900 px-3 py-1.5 text-xs font-medium">EPUB</a>
+                  <a href={`/api/ebook/${b.id}/export?format=docx`} className="rounded border border-neutral-900 px-3 py-1.5 text-xs font-medium">DOCX</a>
+                </div>
+              )}
+
+              {b.status === "completed" && b.book_type !== "ebook" && (
                 <div className="mt-3 flex gap-3">
                   <a
                     href={`/api/books/${b.id}/download?part=interior`}

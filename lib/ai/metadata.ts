@@ -7,7 +7,7 @@
 import { generateJson } from "./provider";
 import { isAiConfigured } from "./models";
 
-export type MetadataBookType = "word_search" | "sudoku" | "maze" | "coloring";
+export type MetadataBookType = "word_search" | "sudoku" | "maze" | "coloring" | "ebook";
 
 export interface BookMetadata {
   title: string;
@@ -41,6 +41,25 @@ function templateMetadata(opts: MetadataInput): BookMetadata {
         "sudoku puzzles with answers",
         "brain games",
         "puzzle book gift",
+      ],
+      generatedBy: "template",
+    };
+  }
+
+  if (opts.bookType === "ebook") {
+    const t = opts.theme ?? "Your Topic";
+    return {
+      title: t,
+      subtitle: `A Practical Guide for ${cap(opts.difficulty)}`,
+      description: `A clear, practical guide to ${t.toLowerCase()} written for ${opts.difficulty}. Organized into focused chapters with actionable steps you can apply right away — no fluff, just useful guidance from start to finish.`,
+      keywords: [
+        t.toLowerCase(),
+        `${t.toLowerCase()} guide`,
+        `${t.toLowerCase()} for beginners`,
+        "how to",
+        "self help",
+        "practical guide",
+        "step by step",
       ],
       generatedBy: "template",
     };
@@ -102,6 +121,17 @@ function templateMetadata(opts: MetadataInput): BookMetadata {
 }
 
 function promptFor(opts: MetadataInput): string {
+  if (opts.bookType === "ebook") {
+    return `Write Amazon KDP metadata for a non-fiction how-to ebook.
+Topic: "${opts.theme}". Audience: ${opts.difficulty}. Chapters: ${opts.puzzleCount}.
+Return JSON of the exact shape:
+{
+  "title": string,           // compelling, benefit-driven, includes the topic
+  "subtitle": string,        // promise + audience
+  "description": string,     // 2 short paragraphs, benefit-driven, no markdown
+  "keywords": string[]       // exactly 7 KDP search keyword phrases
+}`;
+  }
   if (opts.bookType === "coloring") {
     return `Write Amazon KDP metadata for a coloring book.
 Theme: "${opts.theme}". Pages: ${opts.puzzleCount}. Audience: ${opts.difficulty}. Black-and-white line art, bold outlines, printable.

@@ -159,10 +159,22 @@ See [EBOOK_BLUEPRINT.md](EBOOK_BLUEPRINT.md). Re-sequenced to differentiate from
   analysis via `lib/ai/analyzeTopic`); opportunity snapshot saved on every book
   (`books.opportunity`); Ebook selectable + configurable (generation returns
   "coming next"); Storybook shown as Coming Soon. Reuses all generators + engine.
-- **Phase 8 — Async infra** (`generation_jobs` + Trigger.dev) ⏳
-- **Phase 9 — Ebook Creator** (outline → chapter writer + rewrite/expand →
-  quality gate → PDF/EPUB/DOCX → cover generator) ⏳
-- **Phase 10 — Storybook** (resume; reuses async + cover + Opportunity) ⏳
+- **Phase 8 — Async infra** ⏳ deferred — Ebook runs **synchronously**
+  (concurrency-limited chapter writes, ~1–3 min) which is fine for text-only
+  generation; revisit Trigger.dev when image-heavy types (Storybook) need it.
+- **Phase 9 — Ebook Creator** ✅ COMPLETE — opportunity-first, editable:
+  - outline (`lib/ai/outline`) → voice/outline-locked chapter writer
+    (`lib/ai/chapter`, bounded concurrency) → per-chapter **rewrite / expand /
+    shorten** in an editor
+  - metadata (ebook-aware) + **typographic cover** (`lib/generators/ebook/cover`,
+    no image model needed)
+  - exports: **PDF** (reflowable 6×9 + TOC), **EPUB3** (JSZip), **DOCX** (docx) —
+    all built on demand from stored chapters (`lib/export/*`)
+  - DB: `ebook_chapters` (migration `0006`); chapters stored, opportunity snapshot
+    saved; routes `POST /api/ebook`, `POST /api/ebook/[id]/chapter`,
+    `GET /api/ebook/[id]/export`; editor at `/dashboard/ebook/[id]`
+  - Verified live: 3-chapter ebook in ~19s, valid PDF/EPUB/DOCX + cover, rewrite works
+- **Phase 10 — Storybook** (resume; reuses cover + Opportunity; needs async) ⏳
 - **Later** — Series planner, A+ content, Planners, Billing/Credits, Admin, Agency
 
 ## Production defaults (current)

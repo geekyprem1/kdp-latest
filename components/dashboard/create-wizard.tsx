@@ -30,6 +30,8 @@ interface Result {
   pageCount?: number;
   wordSource?: string | null;
   metadataBy?: string;
+  chapterCount?: number; // ebook
+  totalWords?: number; // ebook
 }
 
 const BUILDABLE: BookType[] = ["word_search", "sudoku", "maze", "coloring", "ebook"];
@@ -111,7 +113,8 @@ export function CreateWizard() {
       else if (bookType === "coloring") Object.assign(payload, { theme: topic, ageGroup, style, puzzleCount: count });
       else if (bookType === "ebook") Object.assign(payload, { theme: topic, audience, tone, chapterCount, targetWords });
 
-      const res = await fetch("/api/books", {
+      const endpoint = bookType === "ebook" ? "/api/ebook" : "/api/books";
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -128,6 +131,28 @@ export function CreateWizard() {
 
   // ── result screen ──
   if (result) {
+    if (result.chapterCount !== undefined) {
+      return (
+        <Shell step={4}>
+          <div className="rounded-lg border border-green-300 bg-green-50 p-6">
+            <h2 className="text-lg font-semibold text-green-900">✓ Ebook created</h2>
+            <p className="mt-1 text-sm text-green-800">
+              <strong>{result.title}</strong> — {result.chapterCount} chapters
+              {result.totalWords ? `, ~${result.totalWords.toLocaleString()} words` : ""}.
+            </p>
+            <p className="mt-1 text-xs text-green-700">Edit chapters and export PDF / EPUB / DOCX in the editor.</p>
+            <div className="mt-4">
+              <Link href={`/dashboard/ebook/${result.id}`} className="rounded bg-neutral-900 px-4 py-2 text-sm font-medium text-white">
+                Open Editor →
+              </Link>
+            </div>
+          </div>
+          <button onClick={() => { setResult(null); setStep(1); setAnalysis(null); setBookType(null); }} className="mt-4 text-sm underline">
+            Start over
+          </button>
+        </Shell>
+      );
+    }
     if (result.comingSoon) {
       return (
         <Shell step={4}>

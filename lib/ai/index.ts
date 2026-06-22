@@ -4,3 +4,10 @@ export { generateWordList, type WordListResult } from "./word-list";
 export { generateMetadata, type BookMetadata } from "./metadata";
 export { generateNicheResearch, type NicheResearchResult } from "./niche";
 export { analyzeTopic, type TopicAnalysis, type AnalyzeInput } from "./opportunity-analyze";
+export { generateOutline, type EbookOutline, type OutlineChapter } from "./outline";
+export {
+  writeChapter,
+  rewriteChapter,
+  wordCount,
+  type RewriteAction,
+} from "./chapter";

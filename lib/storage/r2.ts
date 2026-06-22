@@ -81,6 +81,10 @@ export async function getDownloadUrl(key: string, expiresInSec = 3600): Promise<
 
 export const isStorageConfigured = isR2Configured;
 
+export async function putBytes(key: string, body: Uint8Array | Buffer, contentType: string): Promise<void> {
+  await uploadObject(key, Buffer.from(body), contentType);
+}
+
 export async function putBookPdf(key: string, body: Uint8Array | Buffer): Promise<void> {
   await uploadObject(key, Buffer.from(body), "application/pdf");
 }

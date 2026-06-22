@@ -27,17 +27,23 @@ export function bookObjectKey(
   return `${userId}/${bookId}/${part}.pdf`;
 }
 
-/** Upload (or overwrite) a book PDF. */
-export async function putBookPdf(
+/** Upload (or overwrite) any object. */
+export async function putBytes(
   key: string,
-  body: Uint8Array | Buffer
+  body: Uint8Array | Buffer,
+  contentType: string
 ): Promise<void> {
   const admin = getSupabaseAdminClient();
   const { error } = await admin.storage.from(BUCKET).upload(key, Buffer.from(body), {
-    contentType: "application/pdf",
+    contentType,
     upsert: true,
   });
   if (error) throw new Error(`Storage upload failed: ${error.message}`);
+}
+
+/** Upload (or overwrite) a book PDF. */
+export async function putBookPdf(key: string, body: Uint8Array | Buffer): Promise<void> {
+  return putBytes(key, body, "application/pdf");
 }
 
 /** Create a short-lived signed download URL. */

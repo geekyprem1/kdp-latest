@@ -2,6 +2,27 @@
 
 Architecture decisions, newest first. Each: context → decision → consequences.
 
+## ADR-017 — Ebook Creator: editable chapters, sync gen, on-demand multi-format
+**Context:** The Ebook Creator must differ from one-shot "KDP Master" generation —
+editable, quality-controllable, multi-format.
+**Decisions:**
+- **Persisted, editable**: an ebook is a `books` row + ordered `ebook_chapters`
+  rows (migration `0006`). Chapters can be rewritten/expanded/shortened
+  individually in the editor (`/dashboard/ebook/[id]`).
+- **Consistency**: chapters are written **voice-locked** (same tone/audience) and
+  **outline-locked** (each told what the others cover) to avoid drift/repetition —
+  the ebook analog of character consistency.
+- **Synchronous generation** with bounded concurrency (no Trigger.dev yet) — text
+  is fast enough (~1–3 min); async deferred until image-heavy Storybook.
+- **Source-of-truth = Markdown**; exports built **on demand** from chapters:
+  PDF (Puppeteer, reflowable 6×9 + TOC), EPUB3 (JSZip), DOCX (`docx`). No
+  pre-stored export files — always current after edits.
+- **Typographic cover** (gradient + title, rendered to PNG) — no image model
+  required, so ebooks work without a Replicate token.
+**Consequences:** Authors review/edit before publishing and can sell on KDP + other
+stores (EPUB/DOCX). Reuses auth, storage, PDF engine, OpenRouter, Opportunity
+snapshot. Verified live end-to-end.
+
 ## ADR-016 — Unified Create wizard + opportunity snapshot
 **Context:** Each book type had ad-hoc fields in one toggle form; opportunity
 scoring lived only in standalone Niche Research. We want one opportunity-first
