@@ -74,15 +74,28 @@ For the current Word Search vertical slice this runs **synchronously inside an
 API route** (fast, no images). It moves into Trigger.dev when image generation
 and multi-minute jobs arrive.
 
-## AI provider abstraction (planned, deferred)
+## AI provider abstraction (built)
 
 ```
 lib/ai/
-├─ types.ts        # LLMProvider interface
-├─ openrouter.ts   # single OpenRouter client
-├─ models.ts       # primary/fallback registry
-└─ provider.ts     # primary → fallback, retry, schema-validate, log
+├─ types.ts        # message/result types
+├─ models.ts       # primary/fallback registry + isAiConfigured()
+├─ openrouter.ts   # single OpenRouter client (OpenAI-compatible)
+├─ provider.ts     # primary → fallback, timeout, JSON schema-validate, log
+├─ word-list.ts    # generateWordList(niche) → sanitized A–Z pool
+└─ metadata.ts     # generateMetadata() → title/subtitle/description/keywords
 ```
+
+Optional by design: with `OPENROUTER_API_KEY` set, any niche gets AI word lists +
+metadata; without it, the app falls back to curated banks + template metadata.
+
+## SaaS app (built — MVP)
+
+`/login` (Supabase: Google + email magic link) → `/dashboard` (Overview, Create,
+My Books, Download History). `POST /api/books` runs the full pipeline
+synchronously: AI word list → metadata → PDF (interior + cover) → upload to R2 →
+rows in `books`/`book_metadata`. `GET /api/books/[id]/download?part=` checks
+ownership, signs an R2 URL, logs the download. Auth gating in `proxy.ts`.
 
 ## Folder structure
 

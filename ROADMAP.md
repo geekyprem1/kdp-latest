@@ -42,16 +42,32 @@ the Next server. Run `npm run ws:generate` for the CLI check.
 KDP Print Previewer** (Approve enabled). `npm run examples:generate` /
 `examples:validate`.
 
-No Sudoku, Maze, Coloring, Billing, Stripe, Templates, or Admin was started —
-Word Search first, as instructed.
+## Phase 2.5 — MVP SaaS around Word Search ✅ COMPLETE
 
-## Later (locked until Word Search ships)
+The end-to-end product flow: **Login → Create Word Search Book → Download KDP PDF.**
+
+- [x] **Auth** — Supabase Auth (Google OAuth + email magic link), session via
+  `@supabase/ssr`, `/dashboard` gated by `proxy.ts`
+- [x] **Dashboard** — Overview, Create Book, My Books, Download History
+- [x] **Generator UI** — theme, difficulty, page/puzzle count, book title, generate
+- [x] **Book storage** — books + metadata in Supabase, PDFs in Cloudflare R2
+  (private bucket, signed download URLs, download logging)
+- [x] **OpenRouter** — Gemini 2.5 Flash primary → DeepSeek fallback, custom word
+  lists for any niche (graceful fallback to curated banks if unconfigured)
+- [x] **Metadata generator** — title, subtitle, description, 7 keywords (AI, with
+  deterministic template fallback)
+
+DB: `supabase/migrations/0002_books.sql` (`books`, `book_metadata`, `downloads`, RLS).
+Generation runs **synchronously** in the API route (no images → fast enough);
+Trigger.dev async jobs remain deferred until heavier book types (ADR-009).
+
+## Later
 
 - Phase 3 — Sudoku generator (reuse pipeline; solver-verified)
 - Phase 4 — Maze generator
 - Phase 5 — Planners
 - Phase 6 — Coloring Books (Replicate FLUX; **enables bleed by default for this type**)
-- Phase 7 — AI text via OpenRouter (metadata) + Trigger.dev async jobs
+- Phase 7 — Trigger.dev async jobs (for image-heavy generation)
 - Phase 8 — Billing (Stripe + JVZoo/W+), credits, OTO gating
 - Phase 9 — Templates (OTO3), Admin dashboard, hardening
 

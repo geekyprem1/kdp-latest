@@ -2,6 +2,24 @@
 
 Architecture decisions, newest first. Each: context → decision → consequences.
 
+## ADR-009 — MVP SaaS: synchronous generation, magic-link auth, optional AI
+**Context:** Wrap the proven Word Search engine in a usable SaaS (auth →
+create → download) before adding more book types.
+**Decisions:**
+- **Synchronous generation** in the `/api/books` route (no Trigger.dev yet).
+  Word search has no image calls, so a book renders in seconds — async jobs add
+  complexity we don't need until coloring books. `maxDuration` raised on the route.
+- **Auth** via Supabase + `@supabase/ssr`: Google OAuth + **email magic link**
+  (no password storage). `/dashboard` gated in `proxy.ts` (Next 16's renamed
+  middleware) with a defense-in-depth check in the dashboard layout.
+- **AI is optional**: OpenRouter (Gemini→DeepSeek) generates word lists + metadata
+  when `OPENROUTER_API_KEY` is set; otherwise the app falls back to curated word
+  banks + template metadata so the full flow still works with zero AI config.
+- **Storage**: private R2 bucket; PDFs stored whole (no per-page rows yet) and
+  served via short-lived signed URLs; downloads logged via service role.
+**Consequences:** Fast to ship and testable without external keys. Revisit async
+(Trigger.dev) when image generation lands.
+
 ## ADR-008 — Page-number footer must sit inside the safe margin
 **Context:** Amazon KDP's Print Previewer rejected the first sample-book upload
 with "text outside the margins" and "object outside the margins" on the interior

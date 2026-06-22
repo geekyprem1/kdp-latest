@@ -21,6 +21,10 @@ export interface WordSearchBookOptions extends Partial<WordSearchInput> {
   title?: string;
   subtitle?: string;
   author?: string;
+  /** Optional word pool (e.g. AI-generated). Defaults to the theme's bank. */
+  words?: string[];
+  /** Optional back-cover blurb override. */
+  backText?: string;
 }
 
 export interface ResolvedBookConfig {
@@ -63,8 +67,14 @@ export function resolveConfig(opts: WordSearchBookOptions): ResolvedBookConfig {
   };
 }
 
-/** Generate the deterministic puzzle set for a config. */
-export function generatePuzzles(cfg: ResolvedBookConfig): WordSearchPuzzle[] {
+/**
+ * Generate the deterministic puzzle set for a config. An optional `words` pool
+ * (e.g. AI-generated for an arbitrary niche) overrides the curated bank.
+ */
+export function generatePuzzles(
+  cfg: ResolvedBookConfig,
+  words?: string[]
+): WordSearchPuzzle[] {
   return Array.from({ length: cfg.puzzleCount }, (_, i) =>
     generatePuzzle({
       theme: cfg.theme,
@@ -72,6 +82,7 @@ export function generatePuzzles(cfg: ResolvedBookConfig): WordSearchPuzzle[] {
       difficulty: cfg.difficulty,
       wordCount: cfg.wordsPerPuzzle,
       seed: cfg.seed + i,
+      words,
     })
   );
 }
@@ -139,7 +150,7 @@ export async function buildWordSearchBook(
   opts: WordSearchBookOptions
 ): Promise<WordSearchBookResult> {
   const config = resolveConfig(opts);
-  const puzzles = generatePuzzles(config);
+  const puzzles = generatePuzzles(config, opts.words);
   const pages = buildInteriorPages(config, puzzles);
   const pageCount = pages.length;
 
@@ -156,7 +167,9 @@ export async function buildWordSearchBook(
       title: config.title,
       subtitle: config.subtitle,
       author: config.author,
-      backText: `${config.puzzleCount} ${config.theme.toLowerCase()} word search puzzles with a complete answer key. ${config.difficulty.charAt(0).toUpperCase() + config.difficulty.slice(1)} difficulty — great for relaxing, sharpening focus, and passing the time.`,
+      backText:
+        opts.backText ??
+        `${config.puzzleCount} ${config.theme.toLowerCase()} word search puzzles with a complete answer key. ${config.difficulty.charAt(0).toUpperCase() + config.difficulty.slice(1)} difficulty — great for relaxing, sharpening focus, and passing the time.`,
     },
   });
 

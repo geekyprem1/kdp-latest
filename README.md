@@ -2,27 +2,49 @@
 
 AI-powered Amazon KDP book creation platform.
 
-> **Current milestone: PDF Engine Gate.**
-> No generators, billing, templates, admin, or AI workflows are built yet — by
-> design. Nothing else proceeds until a KDP-compliant 6×9 interior + cover PDF
-> passes Amazon KDP's previewer.
+> **Status: MVP SaaS live for Word Search.** Login → Create a word search book →
+> download KDP-validated interior + cover PDFs. The PDF engine is KDP-previewer
+> validated. Sudoku, Maze, Coloring, Billing, and Admin are not built yet.
 
 ---
 
-## What's built (Phase 0)
+## What's built
 
 | Area | Status | Notes |
 |---|---|---|
-| Next.js + TypeScript + Tailwind scaffold | ✅ | App shell only |
-| Environment surface (`.env.example`) | ✅ | Documents all future keys |
-| Supabase foundation schema | ✅ | `profiles` + `credit_transactions` + RLS (`supabase/migrations/0001_foundation.sql`) |
-| Supabase clients (browser/admin) | ✅ | `lib/supabase/` — initialized, not yet used |
-| Cloudflare R2 client | ✅ | `lib/storage/r2.ts` — initialized, not yet used |
-| **PDF Engine** | ✅ | `lib/pdf/` — the gate deliverable |
-| **Word Search generator** | ✅ | `lib/generators/word-search/` — full vertical slice |
-| OpenRouter (Gemini → DeepSeek) | ⏳ deferred | AI workflows, post-gate |
-| Trigger.dev background jobs | ⏳ deferred | Generators/jobs phase |
-| Sudoku / Maze / Coloring / Billing / Templates / Admin | ⏳ deferred | After Word Search |
+| PDF Engine | ✅ KDP-validated | `lib/pdf/` — 8.5×11 interior + wraparound cover |
+| Word Search generator | ✅ | `lib/generators/word-search/` — deterministic, solution keys |
+| Auth | ✅ | Supabase (Google + email magic link), `proxy.ts` gating `/dashboard` |
+| Dashboard | ✅ | Overview, Create Book, My Books, Download History |
+| Book storage | ✅ | `books`/`book_metadata`/`downloads` (Supabase) + PDFs in R2 |
+| OpenRouter AI | ✅ | Gemini→DeepSeek word lists + metadata (optional; bank/template fallback) |
+| Trigger.dev / Sudoku / Maze / Coloring / Billing / Admin | ⏳ later | — |
+
+## Running the SaaS app
+
+```bash
+npm install
+cp .env.example .env.local   # fill in the values below
+npm run dev                  # http://localhost:3000
+```
+
+Required services (the app degrades gracefully if some are missing):
+
+| Service | Needed for | If unset |
+|---|---|---|
+| **Supabase** (URL + anon + service-role) | auth, saving books | login/dashboard won't work |
+| **Cloudflare R2** | storing & downloading PDFs | `Create` returns 503 |
+| **OpenRouter** | word lists for *any* niche + AI metadata | falls back to curated banks + template metadata |
+
+Setup steps:
+1. Create a Supabase project; run `supabase/migrations/*.sql` (0001 then 0002).
+2. In Supabase Auth: enable Google provider and add `${SITE}/auth/callback` as a
+   redirect URL; enable email.
+3. Create a private R2 bucket; fill the `R2_*` vars.
+4. (Optional) Add `OPENROUTER_API_KEY` for arbitrary-niche word lists.
+
+**End-to-end flow:** `/login` → `/dashboard/create` (enter niche, difficulty,
+puzzle count, title) → Generate → download interior + cover PDFs → upload to KDP.
 
 ## The PDF Engine
 

@@ -11,6 +11,25 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 let s3: S3Client | null = null;
 
+/** Whether R2 credentials are present. */
+export function isR2Configured(): boolean {
+  return Boolean(
+    process.env.R2_ACCOUNT_ID &&
+      process.env.R2_ACCESS_KEY_ID &&
+      process.env.R2_SECRET_ACCESS_KEY &&
+      process.env.R2_BUCKET
+  );
+}
+
+/** Canonical object key for a book's PDF parts. */
+export function bookObjectKey(
+  userId: string,
+  bookId: string,
+  part: "interior" | "cover"
+): string {
+  return `books/${userId}/${bookId}/${part}.pdf`;
+}
+
 function getClient(): S3Client {
   if (!s3) {
     const accountId = process.env.R2_ACCOUNT_ID;

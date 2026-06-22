@@ -23,15 +23,14 @@ function emptyGrid(size: number): string[][] {
   return Array.from({ length: size }, () => Array<string>(size).fill(""));
 }
 
-/** Choose the words for one puzzle: bank words that fit, deduped, shuffled. */
+/** Choose the words for one puzzle from a pool: eligible, deduped, shuffled. */
 function selectWords(
-  theme: string,
+  pool: string[],
   size: number,
   count: number,
   rng: Rng
 ): string[] {
-  const { words } = resolveBank(theme);
-  const eligible = Array.from(new Set(words.map((w) => w.toUpperCase())))
+  const eligible = Array.from(new Set(pool.map((w) => w.toUpperCase())))
     .filter((w) => /^[A-Z]+$/.test(w) && w.length <= size);
   return rng.shuffle(eligible).slice(0, count);
 }
@@ -76,6 +75,8 @@ export function generatePuzzle(opts: {
   difficulty: Difficulty;
   wordCount: number;
   seed: number;
+  /** Optional word pool (e.g. AI-generated). Defaults to the theme's bank. */
+  words?: string[];
 }): WordSearchPuzzle {
   const { theme, size, difficulty, wordCount, seed } = opts;
   if (size < 5) throw new Error("Grid size must be at least 5.");
@@ -88,7 +89,8 @@ export function generatePuzzle(opts: {
 
   // Pick the word set deterministically, then place longest-first: long words
   // are hardest to fit and have the best odds on an empty grid.
-  const words = selectWords(theme, size, wordCount, rng).sort(
+  const pool = opts.words && opts.words.length ? opts.words : resolveBank(theme).words;
+  const words = selectWords(pool, size, wordCount, rng).sort(
     (a, b) => b.length - a.length
   );
 

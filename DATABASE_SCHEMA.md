@@ -9,9 +9,10 @@ lives in `public`. RLS is enabled on all user-owned tables.
 |---|---|---|
 | `profiles` | ✅ built | `supabase/migrations/0001_foundation.sql` |
 | `credit_transactions` | ✅ built | `0001_foundation.sql` |
-| `books` | ⏳ planned | with generators |
-| `book_pages` | ⏳ planned | with generators |
-| `book_metadata` | ⏳ planned | with metadata/AI |
+| `books` | ✅ built | `0002_books.sql` |
+| `book_metadata` | ✅ built | `0002_books.sql` |
+| `downloads` | ✅ built | `0002_books.sql` |
+| `book_pages` | ⏳ planned | (not needed yet; PDFs stored whole in R2) |
 | `generation_jobs` | ⏳ planned | with Trigger.dev jobs |
 | `orders` | ⏳ planned | with billing |
 | `templates` | ⏳ planned | with templates (OTO3) |
