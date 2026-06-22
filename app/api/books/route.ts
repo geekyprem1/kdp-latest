@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
-import { uploadObject, bookObjectKey, isR2Configured } from "@/lib/storage/r2";
+import { putBookPdf, bookObjectKey, isStorageConfigured } from "@/lib/storage";
 import { buildWordSearchBook, resolveConfig, type Difficulty } from "@/lib/generators/word-search";
 import { generateWordList, generateMetadata } from "@/lib/ai";
 
@@ -25,9 +25,9 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  if (!isR2Configured()) {
+  if (!isStorageConfigured()) {
     return NextResponse.json(
-      { error: "Storage (Cloudflare R2) is not configured on the server." },
+      { error: "Storage is not configured on the server." },
       { status: 503 }
     );
   }
@@ -103,8 +103,8 @@ export async function POST(req: NextRequest) {
     // ── upload to R2 ──
     const interiorKey = bookObjectKey(user.id, bookId!, "interior");
     const coverKey = bookObjectKey(user.id, bookId!, "cover");
-    await uploadObject(interiorKey, Buffer.from(book.interior.pdf), "application/pdf");
-    await uploadObject(coverKey, Buffer.from(book.cover.pdf), "application/pdf");
+    await putBookPdf(interiorKey, book.interior.pdf);
+    await putBookPdf(coverKey, book.cover.pdf);
 
     // ── finalize ──
     await admin

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
-import { getDownloadUrl } from "@/lib/storage/r2";
+import { getBookSignedUrl } from "@/lib/storage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,6 +39,6 @@ export async function GET(
     .from("downloads")
     .insert({ user_id: user.id, book_id: id, part });
 
-  const url = await getDownloadUrl(key, 300);
+  const url = await getBookSignedUrl(key, 300);
   return NextResponse.redirect(url);
 }

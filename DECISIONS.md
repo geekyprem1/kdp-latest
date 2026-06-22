@@ -2,6 +2,18 @@
 
 Architecture decisions, newest first. Each: context → decision → consequences.
 
+## ADR-010 — Storage: Supabase Storage for MVP, R2 later
+**Context:** R2 has unlimited free egress but requires adding a payment method to
+enable. For the MVP we want zero extra setup/cost.
+**Decision:** Store book PDFs in a private **Supabase Storage** bucket (`books`)
+via the service-role client, with short-lived signed download URLs. Put both
+providers behind a provider-agnostic `lib/storage/` interface
+(`isStorageConfigured` / `bookObjectKey` / `putBookPdf` / `getBookSignedUrl`);
+`lib/storage/index.ts` selects the active one.
+**Consequences:** No card needed now (Supabase free: 1 GB storage, 5 GB egress/mo).
+Switching to R2 when customers arrive (unlimited free egress) is a one-line import
+change in `index.ts` + `R2_*` env vars — no route changes.
+
 ## ADR-009 — MVP SaaS: synchronous generation, magic-link auth, optional AI
 **Context:** Wrap the proven Word Search engine in a usable SaaS (auth →
 create → download) before adding more book types.

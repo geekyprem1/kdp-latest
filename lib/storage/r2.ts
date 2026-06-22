@@ -75,3 +75,16 @@ export async function getDownloadUrl(key: string, expiresInSec = 3600): Promise<
     { expiresIn: expiresInSec }
   );
 }
+
+// ── Unified storage-provider interface (matches lib/storage/supabase-storage) ──
+// To switch from Supabase Storage to R2 later, point lib/storage/index.ts here.
+
+export const isStorageConfigured = isR2Configured;
+
+export async function putBookPdf(key: string, body: Uint8Array | Buffer): Promise<void> {
+  await uploadObject(key, Buffer.from(body), "application/pdf");
+}
+
+export async function getBookSignedUrl(key: string, expiresInSec = 300): Promise<string> {
+  return getDownloadUrl(key, expiresInSec);
+}

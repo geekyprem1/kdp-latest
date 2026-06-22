@@ -16,7 +16,7 @@ AI-powered Amazon KDP book creation platform.
 | Word Search generator | ✅ | `lib/generators/word-search/` — deterministic, solution keys |
 | Auth | ✅ | Supabase (Google + email magic link), `proxy.ts` gating `/dashboard` |
 | Dashboard | ✅ | Overview, Create Book, My Books, Download History |
-| Book storage | ✅ | `books`/`book_metadata`/`downloads` (Supabase) + PDFs in R2 |
+| Book storage | ✅ | `books`/`book_metadata`/`downloads` (Supabase) + PDFs in Supabase Storage (R2-ready) |
 | OpenRouter AI | ✅ | Gemini→DeepSeek word lists + metadata (optional; bank/template fallback) |
 | Trigger.dev / Sudoku / Maze / Coloring / Billing / Admin | ⏳ later | — |
 
@@ -32,9 +32,13 @@ Required services (the app degrades gracefully if some are missing):
 
 | Service | Needed for | If unset |
 |---|---|---|
-| **Supabase** (URL + anon + service-role) | auth, saving books | login/dashboard won't work |
-| **Cloudflare R2** | storing & downloading PDFs | `Create` returns 503 |
+| **Supabase** (URL + anon + service-role) | auth, saving books, **PDF storage** | login/dashboard/`Create` won't work |
 | **OpenRouter** | word lists for *any* niche + AI metadata | falls back to curated banks + template metadata |
+
+> PDFs are stored in **Supabase Storage** (private `books` bucket) for the MVP —
+> no separate storage service or card needed. The storage layer
+> (`lib/storage/`) is provider-agnostic; switching to **Cloudflare R2** later is a
+> one-line change in `lib/storage/index.ts` plus the `R2_*` env vars.
 
 Setup steps:
 1. Create a Supabase project; run `supabase/migrations/*.sql` (0001 then 0002).
