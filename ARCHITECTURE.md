@@ -33,13 +33,29 @@ lib/pdf/
 ├─ render.ts           # Puppeteer → PDF at exact physical size (browser reuse)
 ├─ templates/
 │  ├─ interior.ts      # mirrored-margin interior pages
-│  ├─ cover.ts         # wraparound back│spine│front
-│  └─ word-search.ts   # puzzle + solution page templates  [Word Search phase]
+│  └─ cover.ts         # wraparound back│spine│front
 └─ index.ts            # buildInteriorPdf / buildCoverPdf / buildGateSample
 ```
 
 The engine is framework-agnostic TypeScript: callable from CLI scripts now and
-from API routes / Trigger.dev tasks later.
+from API routes / Trigger.dev tasks later. It stays generic — each generator
+owns its own page HTML and calls `buildInteriorPdf` / `buildCoverPdf`.
+
+## Word Search generator (built)
+
+```
+lib/generators/word-search/
+├─ types.ts        # difficulty, directions, puzzle shape
+├─ word-banks.ts   # curated theme word lists (no AI)
+├─ generate.ts     # deterministic seeded puzzle generation
+├─ render.ts       # puzzle + solution page HTML (InteriorPageContent)
+├─ book.ts         # config → puzzles → interior + cover PDFs
+└─ index.ts
+```
+
+Surfaced via `app/word-search` (form + download) and
+`app/api/word-search/generate` (POST → PDF). Runs synchronously in the route
+(no images, fast). `lib/util/prng.ts` provides the seeded RNG.
 
 ## Generation pipeline (target)
 

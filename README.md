@@ -19,9 +19,10 @@ AI-powered Amazon KDP book creation platform.
 | Supabase clients (browser/admin) | ✅ | `lib/supabase/` — initialized, not yet used |
 | Cloudflare R2 client | ✅ | `lib/storage/r2.ts` — initialized, not yet used |
 | **PDF Engine** | ✅ | `lib/pdf/` — the gate deliverable |
+| **Word Search generator** | ✅ | `lib/generators/word-search/` — full vertical slice |
 | OpenRouter (Gemini → DeepSeek) | ⏳ deferred | AI workflows, post-gate |
 | Trigger.dev background jobs | ⏳ deferred | Generators/jobs phase |
-| Generators / Billing / Templates / Admin | ⏳ deferred | Post-gate |
+| Sudoku / Maze / Coloring / Billing / Templates / Admin | ⏳ deferred | After Word Search |
 
 ## The PDF Engine
 
@@ -53,6 +54,24 @@ npm run gate:verify     # asserts page count + physical dimensions vs spec
 
 Sample is a 100-page, 6×9, white-paper book (≥79pp so the spine carries text and
 the gutter table is exercised).
+
+## Word Search generator
+
+A complete vertical slice: **Input → Puzzle Generation → PDF → Download**.
+Deterministic (seeded), theme-based word lists, no AI image generation. Output is
+8.5×11, no-bleed, with puzzle pages and a highlighted answer key.
+
+```bash
+# CLI (writes output/word-search-{interior,cover}.pdf, checks determinism)
+npm run ws:generate -- Dinosaurs 20 medium
+
+# Web flow
+npm run dev      # then open http://localhost:3000/word-search
+```
+
+API: `POST /api/word-search/generate` with
+`{ theme, puzzleCount, gridSize, difficulty, part: "interior"|"cover" }` →
+streams a PDF. (≥11 puzzles needed to clear KDP's 24-page minimum.)
 
 ## ✅ Gate success criteria
 

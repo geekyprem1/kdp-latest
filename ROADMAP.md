@@ -20,18 +20,25 @@
 
 Milestone tag: **`v0.1-pdf-gate`**
 
-## Phase 2 — Word Search Generator 🚧 IN PROGRESS
+## Phase 2 — Word Search Generator ✅ COMPLETE (end-to-end)
 
 Complete vertical slice: **Input → Puzzle Generation → PDF → Download**.
 
-- [ ] Deterministic (seeded) word-search algorithm
-- [ ] Theme-based word lists (no AI image generation)
-- [ ] Puzzle pages + solution pages
-- [ ] PDF export through the existing KDP engine
-- [ ] Input form + download (end-to-end)
+- [x] Deterministic (seeded) word-search algorithm — `lib/generators/word-search/`
+- [x] Theme-based word lists, no AI image generation — curated word banks
+- [x] Puzzle pages + solution pages (answer key with highlighted grid)
+- [x] PDF export through the existing KDP engine (8.5×11, no-bleed)
+- [x] Input form + download — `/word-search` + `/api/word-search/generate`
 
-No Sudoku, Maze, Coloring, Billing, Stripe, Templates, or Admin until Word Search
-works end-to-end.
+Validated: deterministic across runs, 0 skipped placements (longest-first),
+interior exactly 8.5×11, fonts embedded, real HTTP path renders via Puppeteer in
+the Next server. Run `npm run ws:generate` for the CLI check.
+
+> ⏳ As with all printed output, the authoritative final check is a KDP previewer
+> upload of a generated word-search interior + cover.
+
+No Sudoku, Maze, Coloring, Billing, Stripe, Templates, or Admin was started —
+Word Search first, as instructed.
 
 ## Later (locked until Word Search ships)
 
