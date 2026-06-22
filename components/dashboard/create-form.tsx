@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 type Difficulty = "easy" | "medium" | "hard";
 
@@ -14,8 +15,10 @@ interface Result {
 }
 
 export function CreateBookForm() {
-  const [theme, setTheme] = useState("");
-  const [title, setTitle] = useState("");
+  const params = useSearchParams();
+  // Prefill from Niche Research one-click ("Create Word Search Book").
+  const [theme, setTheme] = useState(params.get("theme") ?? "");
+  const [title, setTitle] = useState(params.get("title") ?? "");
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [puzzleCount, setPuzzleCount] = useState(25);
   const [busy, setBusy] = useState(false);

@@ -15,7 +15,8 @@ AI-powered Amazon KDP book creation platform.
 | PDF Engine | ✅ KDP-validated | `lib/pdf/` — 8.5×11 interior + wraparound cover |
 | Word Search generator | ✅ | `lib/generators/word-search/` — deterministic, solution keys |
 | Auth | ✅ | Supabase (Google + email magic link), `proxy.ts` gating `/dashboard` |
-| Dashboard | ✅ | Overview, Create Book, My Books, Download History |
+| Dashboard | ✅ | Overview, Niche Research, Create Book, My Books, Download History |
+| Niche Research | ✅ | AI → 20 scored niches, opportunity score, recommendations, save, PDF export, one-click generate |
 | Book storage | ✅ | `books`/`book_metadata`/`downloads` (Supabase) + PDFs in Supabase Storage (R2-ready) |
 | OpenRouter AI | ✅ | Gemini→DeepSeek word lists + metadata (optional; bank/template fallback) |
 | Trigger.dev / Sudoku / Maze / Coloring / Billing / Admin | ⏳ later | — |

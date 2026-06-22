@@ -36,6 +36,21 @@ export interface RenderOptions {
   heightIn: number;
 }
 
+/**
+ * Render a flowing, multi-page document whose page size + margins come entirely
+ * from CSS `@page`. Use for reports (vs. renderPdf which pins one fixed page size).
+ */
+export async function renderPdfFromCss(html: string): Promise<Uint8Array> {
+  const browser = await getBrowser();
+  const page = await browser.newPage();
+  try {
+    await page.setContent(html, { waitUntil: "load" });
+    return await page.pdf({ printBackground: true, preferCSSPageSize: true });
+  } finally {
+    await page.close();
+  }
+}
+
 export interface PngOptions {
   widthIn: number;
   heightIn: number;

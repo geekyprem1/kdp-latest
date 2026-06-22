@@ -12,6 +12,7 @@ lives in `public`. RLS is enabled on all user-owned tables.
 | `books` | ✅ built | `0002_books.sql` |
 | `book_metadata` | ✅ built | `0002_books.sql` |
 | `downloads` | ✅ built | `0002_books.sql` |
+| `niche_reports` | ✅ built | `0004_niche_reports.sql` |
 | `book_pages` | ⏳ planned | (not needed yet; PDFs stored whole in R2) |
 | `generation_jobs` | ⏳ planned | with Trigger.dev jobs |
 | `orders` | ⏳ planned | with billing |

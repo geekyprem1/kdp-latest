@@ -22,7 +22,7 @@ import { renderCoverHtml, type CoverContent } from "./templates/cover";
 import { renderPdf } from "./render";
 
 export * from "./kdp-specs";
-export { closeBrowser, renderPng } from "./render";
+export { closeBrowser, renderPng, renderPdfFromCss } from "./render";
 export { validateBook, allPass, type Check } from "./validate";
 
 export interface BookMeta {

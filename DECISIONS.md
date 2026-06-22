@@ -2,6 +2,17 @@
 
 Architecture decisions, newest first. Each: context → decision → consequences.
 
+## ADR-011 — Niche scoring: AI estimates factors, app computes the score
+**Context:** Niche Research needs a 0–100 opportunity score across several factors.
+**Decision:** The AI returns only raw 0–100 factor estimates (demand, competition,
+evergreen, expansion, KDP suitability) plus qualitative notes. The opportunity
+SCORE and band (Low/Medium/High/Excellent) are computed **deterministically** in
+`lib/niche/score.ts` (competition inverted, weighted sum), not by the model.
+**Consequences:** Scores are consistent, explainable, and tunable in one place
+without re-prompting. Ideas are re-sorted by the computed score before saving.
+Reports are stored fully enriched in `niche_reports.ideas` (jsonb) so reopening
+and PDF export need no recompute or re-call.
+
 ## ADR-010 — Storage: Supabase Storage for MVP, R2 later
 **Context:** R2 has unlimited free egress but requires adding a payment method to
 enable. For the MVP we want zero extra setup/cost.

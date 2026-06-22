@@ -61,6 +61,25 @@ DB: `supabase/migrations/0002_books.sql` (`books`, `book_metadata`, `downloads`,
 Generation runs **synchronously** in the API route (no images → fast enough);
 Trigger.dev async jobs remain deferred until heavier book types (ADR-009).
 
+## Phase 2.6 — Niche Research Engine ✅ COMPLETE
+
+Find profitable KDP niches before generating books.
+
+- [x] Sidebar **Niche Research** + research form (keyword, audience, category, country)
+- [x] OpenRouter (Gemini → DeepSeek) → 20 niche ideas with demand/competition
+  estimates, seasonal + monetization notes, recommended book type
+- [x] **Opportunity scoring engine** (0–100, deterministic): 30% demand +
+  25% (100−competition) + 15% evergreen + 15% expansion + 15% KDP fit →
+  Low / Medium / High / Excellent
+- [x] Per-niche book recommendations (Word Search / Sudoku / Maze / Planner /
+  Coloring / Story)
+- [x] One-click **Create Word Search Book** (prefills the generator)
+- [x] Saved reports (`niche_reports`, RLS) — reopen any past research
+- [x] **Export report as PDF** (multi-page, via the existing PDF engine)
+
+DB: `0004_niche_reports.sql`. Verified live: Gemini returned 20 scored, sorted
+ideas in ~14s.
+
 ## Later
 
 - Phase 3 — Sudoku generator (reuse pipeline; solver-verified)
