@@ -174,6 +174,10 @@ See [EBOOK_BLUEPRINT.md](EBOOK_BLUEPRINT.md). Re-sequenced to differentiate from
     saved; routes `POST /api/ebook`, `POST /api/ebook/[id]/chapter`,
     `GET /api/ebook/[id]/export`; editor at `/dashboard/ebook/[id]`
   - Verified live: 3-chapter ebook in ~19s, valid PDF/EPUB/DOCX + cover, rewrite works
+- **Cover Generator** ✅ COMPLETE (standalone) — `lib/cover/`: AI brief
+  (OpenRouter) + FLUX background + crisp typeset overlay → 3 variations; smart
+  per-type templates; library (`covers`, migration `0007`); Download PNG / Use
+  for Book. Existing generators untouched.
 - **Phase 10 — Storybook** (resume; reuses cover + Opportunity; needs async) ⏳
 - **Later** — Series planner, A+ content, Planners, Billing/Credits, Admin, Agency
 

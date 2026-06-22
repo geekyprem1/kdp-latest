@@ -1,0 +1,46 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getBookSignedUrl } from "@/lib/storage";
+import { CoverResults } from "@/components/dashboard/cover-results";
+
+export const dynamic = "force-dynamic";
+
+export default async function CoverDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = await createSupabaseServerClient();
+
+  const { data: cover } = await supabase
+    .from("covers")
+    .select("id, title, subtitle, book_type, layout, typography, variation_keys")
+    .eq("id", id)
+    .single();
+  if (!cover) notFound();
+
+  const { data: bookData } = await supabase
+    .from("books")
+    .select("id, title")
+    .order("created_at", { ascending: false })
+    .limit(50);
+  const books = (bookData ?? []) as Array<{ id: string; title: string }>;
+
+  const keys = (cover.variation_keys as string[] | null) ?? [];
+  const urls = await Promise.all(keys.map((k) => getBookSignedUrl(k, 600)));
+  const variations = urls.map((url, index) => ({ index, url }));
+
+  return (
+    <div className="mx-auto max-w-3xl">
+      <Link href="/dashboard/cover" className="text-sm text-neutral-500 hover:underline">← Cover Generator</Link>
+      <h1 className="mt-1 text-2xl font-bold">{cover.title}</h1>
+      {cover.subtitle && <p className="text-sm text-neutral-600">{cover.subtitle}</p>}
+      <div className="mt-6">
+        <CoverResults
+          coverId={cover.id}
+          variations={variations}
+          books={books}
+          brief={{ layout: cover.layout ?? undefined, typography: cover.typography ?? undefined }}
+        />
+      </div>
+    </div>
+  );
+}

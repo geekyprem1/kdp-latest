@@ -2,6 +2,22 @@
 
 Architecture decisions, newest first. Each: context → decision → consequences.
 
+## ADR-018 — Cover Generator: FLUX background + crisp typeset overlay
+**Context:** Need professional KDP covers for all book types. AI image models
+render garbled text, so titles can't come from the image itself.
+**Decision:** Standalone `lib/cover/` module. OpenRouter builds a brief (a
+background-art prompt with NO text, plus layout & typography suggestions); FLUX
+Schnell (shared `lib/ai/replicate.ts`) renders 3 background variations; each is
+**composited with a crisp HTML-typeset title/subtitle/author** via the Puppeteer
+renderer. Smart per-type templates (puzzle = bold activity-book, ebook =
+business/serif, coloring = playful). Without a Replicate token it falls back to
+gradient backgrounds (still real covers). Stored in the `covers` table +
+storage (migration `0007`); library + reopen; "Use for Book" sets a chosen book's
+`cover_key`.
+**Consequences:** Sharp titles regardless of the AI art. Reuses auth, OpenRouter,
+storage; existing generators untouched. A new shared FLUX helper was added (not a
+modification of the coloring/story copies).
+
 ## ADR-017 — Ebook Creator: editable chapters, sync gen, on-demand multi-format
 **Context:** The Ebook Creator must differ from one-shot "KDP Master" generation —
 editable, quality-controllable, multi-format.
