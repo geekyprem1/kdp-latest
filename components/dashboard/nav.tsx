@@ -10,6 +10,7 @@ const MAIN = [
   { href: "/dashboard/create", label: "Create Book" },
   { href: "/dashboard/bundle", label: "Bundle Generator" },
   { href: "/dashboard/cover", label: "Cover Generator" },
+  { href: "/dashboard/in-progress", label: "Book In Progress" },
 ];
 
 // Dedicated generator entries → unified Create wizard with the type preselected.

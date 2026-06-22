@@ -2,6 +2,25 @@
 
 Architecture decisions, newest first. Each: context → decision → consequences.
 
+## ADR-022 — Background generation: in-process jobs (Option 1)
+**Context:** Generation should be async — start, leave, come back, download.
+Generators must not change.
+**Decision:** A `generation_jobs` table (migration `0011`) + `lib/jobs/`
+(job-progress, job-runner, job-queue). `/api/books` and `/api/ebook` now
+**enqueue** a job and return `{ jobId }` immediately; the wizard redirects to
+`/dashboard/in-progress/[id]`. The runner executes in the **same server process**
+(fire-and-forget) by dispatching to the existing pipelines
+(`generateAndStoreBook` / `generateAndStoreEbook`, which gained an optional
+`onProgress` callback — orchestration only). State lives in the DB, so refresh /
+logout / close-browser are fine; the UI polls via `router.refresh()`.
+**Recovery/retry:** `input` is persisted so any job can be re-run; queued jobs are
+re-kicked on the In-Progress page (`recoverQueuedJobs`); failed/stuck jobs have a
+Retry/Resume action. A `running` set prevents double execution per process.
+**Consequences:** Works on a single long-running server (not serverless cold-stop;
+those use Retry). Generators untouched; Bundle stays synchronous. Designed so a
+durable worker or Trigger.dev later only changes `lib/jobs/job-queue.ts`. Storybook
+(multi-minute) drops in via a new job_type + runner branch — no architecture change.
+
 ## ADR-021 — Author/Publishing Profile inherited without touching generators
 **Context:** Every book should inherit author/pen/publisher/language/trim/price/
 AI-disclosure/copyright. Generators must not be modified.

@@ -174,6 +174,12 @@ See [EBOOK_BLUEPRINT.md](EBOOK_BLUEPRINT.md). Re-sequenced to differentiate from
     saved; routes `POST /api/ebook`, `POST /api/ebook/[id]/chapter`,
     `GET /api/ebook/[id]/export`; editor at `/dashboard/ebook/[id]`
   - Verified live: 3-chapter ebook in ~19s, valid PDF/EPUB/DOCX + cover, rewrite works
+- **Background generation (Book In Progress)** ✅ COMPLETE — `generation_jobs`
+  (migration `0011`) + `lib/jobs/` (runner/queue/progress). `/api/books` &
+  `/api/ebook` enqueue + return immediately; wizard → `/dashboard/in-progress`.
+  Progress bar, per-type timeline, Resume/Retry/Cancel/Delete, queued-job
+  recovery, dashboard widgets + completion notifications. Option 1 (same-server
+  async); generators untouched; Storybook-ready via a new job_type.
 - **Author & Publishing Profile** ✅ COMPLETE — per-user defaults
   (author/pen/publisher/language/trim/price/AI-disclosure/copyright) on `profiles`
   (migration `0010`); `/dashboard/settings`. Inherited by every book (author via

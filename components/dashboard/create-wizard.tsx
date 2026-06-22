@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   BAND_COLORS,
   BADGE_COLORS,
@@ -61,6 +61,7 @@ const defaultCount = (t: BookType | null) =>
 
 export function CreateWizard() {
   const params = useSearchParams();
+  const router = useRouter();
   // Dedicated generator entries deep-link with ?type= → preselect + jump to config.
   const presetType = slugToType(params.get("type"));
   const [step, setStep] = useState(presetType ? 4 : 1);
@@ -141,10 +142,14 @@ export function CreateWizard() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? `Failed (${res.status})`);
+      // Generation now runs in the background — go to the Book In Progress page.
+      if (json.jobId) {
+        router.push(`/dashboard/in-progress/${json.jobId}`);
+        return;
+      }
       setResult(json);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Generation failed");
-    } finally {
       setBusy(false);
     }
   }

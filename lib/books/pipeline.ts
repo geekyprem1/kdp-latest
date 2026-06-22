@@ -128,12 +128,16 @@ export interface StoredBook {
 export async function generateAndStoreBook(
   userId: string,
   input: BookGenInput,
-  opts?: { opportunity?: unknown; bundleId?: string | null }
+  opts?: { opportunity?: unknown; bundleId?: string | null; onProgress?: (step: string, percent: number) => void | Promise<void> }
 ): Promise<StoredBook> {
   const admin = getSupabaseAdminClient();
+  const progress = async (step: string, pct: number) => {
+    try { await opts?.onProgress?.(step, pct); } catch { /* progress is best-effort */ }
+  };
   // Inherit the author from the Publishing Profile (passed to the generator's
   // existing author option — no generator changes).
   const author = input.author ?? profileAuthor(await loadPublishingProfile(userId));
+  await progress("Metadata", 15);
   const plan = await planBook({ ...input, author });
 
   const { data: inserted, error: insErr } = await admin
@@ -158,11 +162,14 @@ export async function generateAndStoreBook(
   const bookId = inserted.id as string;
 
   try {
+    await progress("Generating", 40);
     const book = await plan.build();
+    await progress("Uploading", 80);
     const interiorKey = bookObjectKey(userId, bookId, "interior");
     const coverKey = bookObjectKey(userId, bookId, "cover");
     await putBookPdf(interiorKey, book.interior.pdf);
     await putBookPdf(coverKey, book.cover.pdf);
+    await progress("Finalizing", 95);
 
     await admin.from("books").update({
       status: "completed", page_count: book.pageCount,

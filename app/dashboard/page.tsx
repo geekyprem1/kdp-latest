@@ -16,16 +16,35 @@ interface RecentBook {
 
 export default async function DashboardHome() {
   const supabase = await createSupabaseServerClient();
-  const [{ count: bookCount }, { count: downloadCount }, { data: recentData }] = await Promise.all([
+  const weekAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+  const dayAgo = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+  const [
+    { count: bookCount },
+    { count: downloadCount },
+    { count: inProgressCount },
+    { count: completedWeek },
+    { data: recentData },
+    { data: readyData },
+  ] = await Promise.all([
     supabase.from("books").select("*", { count: "exact", head: true }),
     supabase.from("downloads").select("*", { count: "exact", head: true }),
-    supabase
-      .from("books")
-      .select("id, title, book_type, status, created_at")
-      .order("created_at", { ascending: false })
-      .limit(5),
+    supabase.from("generation_jobs").select("*", { count: "exact", head: true }).in("status", ["queued", "processing"]),
+    supabase.from("generation_jobs").select("*", { count: "exact", head: true }).eq("status", "completed").gte("completed_at", weekAgo),
+    supabase.from("books").select("id, title, book_type, status, created_at").order("created_at", { ascending: false }).limit(5),
+    supabase.from("generation_jobs").select("id, title, book_id").eq("status", "completed").gte("completed_at", dayAgo).order("completed_at", { ascending: false }).limit(3),
   ]);
   const recent = (recentData ?? []) as RecentBook[];
+  const ready = (readyData ?? []) as Array<{ id: string; title: string | null; book_id: string | null }>;
+
+  const Stat = ({ value, label, href }: { value: number; label: string; href?: string }) => {
+    const inner = (
+      <div className="rounded-lg border border-neutral-200 p-5 hover:bg-neutral-50">
+        <div className="text-3xl font-bold">{value}</div>
+        <div className="text-sm text-neutral-500">{label}</div>
+      </div>
+    );
+    return href ? <Link href={href}>{inner}</Link> : inner;
+  };
 
   const typeLabel = (t: string) => BOOK_TYPE_LABELS[t as BookType] ?? t;
   const bookHref = (b: RecentBook) =>
@@ -39,16 +58,27 @@ export default async function DashboardHome() {
         coloring books, and ebooks in minutes.
       </p>
 
+      {/* completion notifications */}
+      {ready.length > 0 && (
+        <div className="mt-5 space-y-2">
+          {ready.map((r) => (
+            <Link
+              key={r.id}
+              href={r.book_id ? `/dashboard/books/${r.book_id}` : `/dashboard/in-progress/${r.id}`}
+              className="block rounded-lg border border-green-300 bg-green-50 px-4 py-2.5 text-sm text-green-800 hover:bg-green-100"
+            >
+              ✓ Your “{r.title ?? "book"}” is ready.
+            </Link>
+          ))}
+        </div>
+      )}
+
       {/* stats */}
-      <div className="mt-6 grid grid-cols-2 gap-4">
-        <div className="rounded-lg border border-neutral-200 p-5">
-          <div className="text-3xl font-bold">{bookCount ?? 0}</div>
-          <div className="text-sm text-neutral-500">Books created</div>
-        </div>
-        <div className="rounded-lg border border-neutral-200 p-5">
-          <div className="text-3xl font-bold">{downloadCount ?? 0}</div>
-          <div className="text-sm text-neutral-500">Downloads</div>
-        </div>
+      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <Stat value={bookCount ?? 0} label="Books created" />
+        <Stat value={downloadCount ?? 0} label="Downloads" />
+        <Stat value={inProgressCount ?? 0} label="Books in progress" href="/dashboard/in-progress" />
+        <Stat value={completedWeek ?? 0} label="Completed this week" />
       </div>
 
       {/* primary actions */}
