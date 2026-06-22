@@ -24,6 +24,7 @@ const GENERATORS = [
 const LIBRARY = [
   { href: "/dashboard/books", label: "My Books" },
   { href: "/dashboard/downloads", label: "Download History" },
+  { href: "/dashboard/settings", label: "Settings" },
 ];
 
 export function DashboardNav({ email }: { email?: string | null }) {

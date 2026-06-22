@@ -2,6 +2,21 @@
 
 Architecture decisions, newest first. Each: context → decision → consequences.
 
+## ADR-021 — Author/Publishing Profile inherited without touching generators
+**Context:** Every book should inherit author/pen/publisher/language/trim/price/
+AI-disclosure/copyright. Generators must not be modified.
+**Decision:** Store the profile on the existing `profiles` row (migration `0010`).
+Inherit at the orchestration layer: the shared book pipeline and `/api/ebook`
+load the profile and pass `author = pen ?? author` into each generator's EXISTING
+`author` option (no generator change) and store it in `books.config`. The Publish
+Package pulls publisher, language, copyright, AI disclosure, and default price
+from the profile into `metadata.json` (now also carrying `publisher` + `copyright`).
+A `/dashboard/settings` page edits the profile via `/api/settings` (RLS "own
+profile update").
+**Consequences:** Real inheritance for author (on cover/title page) and all
+publishing metadata, with zero generator edits. Trim/price are stored defaults;
+the book's actual engine trim remains authoritative in metadata.
+
 ## ADR-020 — KDP Publish Package: stored artifacts, ZIP on demand
 **Context:** Every book should yield a ready-to-publish KDP bundle without
 touching the generators.

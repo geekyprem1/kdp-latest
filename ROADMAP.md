@@ -174,6 +174,12 @@ See [EBOOK_BLUEPRINT.md](EBOOK_BLUEPRINT.md). Re-sequenced to differentiate from
     saved; routes `POST /api/ebook`, `POST /api/ebook/[id]/chapter`,
     `GET /api/ebook/[id]/export`; editor at `/dashboard/ebook/[id]`
   - Verified live: 3-chapter ebook in ~19s, valid PDF/EPUB/DOCX + cover, rewrite works
+- **Author & Publishing Profile** ✅ COMPLETE — per-user defaults
+  (author/pen/publisher/language/trim/price/AI-disclosure/copyright) on `profiles`
+  (migration `0010`); `/dashboard/settings`. Inherited by every book (author via
+  the generator's existing option) and its publish package (publisher, language,
+  copyright, price, disclosure). Generators untouched. Cover Generator already
+  shipped.
 - **KDP Publish Package** ✅ COMPLETE — `lib/publishing/`: per book →
   metadata.json, keywords.txt (7 primary + 20 long-tail), description.txt,
   categories.txt, book_titles.txt (10), publish_checklist.txt + interior/cover →

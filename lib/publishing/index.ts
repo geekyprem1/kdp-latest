@@ -3,6 +3,13 @@ export { recommendCategories } from "./categories";
 export { generateAltTitles } from "./titles";
 export { generateDescription, buildMetadataJson, suggestedPrice, AI_DISCLOSURE, type MetadataJson } from "./metadata";
 export {
+  loadPublishingProfile,
+  profileAuthor,
+  profileCopyright,
+  DEFAULT_PROFILE,
+  type PublishingProfile,
+} from "./profile";
+export {
   generatePackageData,
   buildChecklist,
   packageFiles,

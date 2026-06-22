@@ -64,10 +64,12 @@ export interface MetadataJson {
   title: string;
   subtitle: string;
   author: string;
+  publisher: string;
   language: string;
   trim_size: string;
   book_type: string;
   ai_disclosure: string;
+  copyright: string;
   opportunity_score: number | null;
   description: string;
   keywords: string[];
@@ -79,10 +81,15 @@ export function buildMetadataJson(opts: {
   title: string;
   subtitle?: string;
   author: string;
+  publisher?: string;
+  language?: string;
   trimSize: string;
   bookType: string;
+  aiDisclosure?: string;
+  copyright?: string;
   opportunityScore: number | null;
   pageCount?: number;
+  priceOverride?: number | null;
   description: string;
   keywords: string[]; // primary
   categories: string[];
@@ -91,14 +98,16 @@ export function buildMetadataJson(opts: {
     title: opts.title,
     subtitle: opts.subtitle ?? "",
     author: opts.author,
-    language: "English",
+    publisher: opts.publisher ?? "",
+    language: opts.language ?? "English",
     trim_size: opts.trimSize,
     book_type: opts.bookType,
-    ai_disclosure: AI_DISCLOSURE,
+    ai_disclosure: opts.aiDisclosure?.trim() || AI_DISCLOSURE,
+    copyright: opts.copyright ?? "",
     opportunity_score: opts.opportunityScore,
     description: opts.description,
     keywords: opts.keywords,
     categories: opts.categories,
-    suggested_price: suggestedPrice(opts.bookType, opts.pageCount),
+    suggested_price: opts.priceOverride != null && opts.priceOverride > 0 ? opts.priceOverride : suggestedPrice(opts.bookType, opts.pageCount),
   };
 }

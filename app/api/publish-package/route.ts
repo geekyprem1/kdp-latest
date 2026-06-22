@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
-import { generatePackageData, type PublishContext } from "@/lib/publishing";
+import { generatePackageData, loadPublishingProfile, profileAuthor, profileCopyright, type PublishContext } from "@/lib/publishing";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,11 +35,13 @@ export async function POST(req: NextRequest) {
   const meta = metaArr?.[0] ?? null;
   const cfg = (book.config ?? {}) as { author?: string; audience?: string; ageGroup?: string };
   const opp = (book.opportunity ?? null) as { opportunity?: number } | null;
+  const profile = await loadPublishingProfile(user.id);
 
   const ctx: PublishContext = {
     title: book.title,
     subtitle: meta?.subtitle ?? undefined,
-    author: cfg.author ?? "KDP Pocket AI",
+    // author baked into the book wins; otherwise fall back to the profile
+    author: cfg.author || profileAuthor(profile),
     bookType: book.book_type,
     trim: book.trim_size ?? "8.5x11",
     theme: book.theme,
@@ -50,6 +52,12 @@ export async function POST(req: NextRequest) {
     existingDescription: meta?.description ?? undefined,
     existingKeywords: meta?.keywords ?? undefined,
     bleed: book.book_type === "coloring",
+    // inherited from the Publishing Profile
+    publisher: profile.publisherName,
+    language: profile.language,
+    copyright: profileCopyright(profile),
+    aiDisclosure: profile.aiDisclosure,
+    priceOverride: profile.defaultPrice,
   };
 
   try {

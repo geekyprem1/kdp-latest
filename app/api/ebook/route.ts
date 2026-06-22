@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { putBytes, bookObjectKey, isStorageConfigured } from "@/lib/storage";
 import { buildEbook } from "@/lib/generators/ebook";
+import { loadPublishingProfile, profileAuthor } from "@/lib/publishing";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,6 +34,7 @@ export async function POST(req: NextRequest) {
   let bookId: string | null = null;
 
   try {
+    const author = profileAuthor(await loadPublishingProfile(user.id));
     const built = await buildEbook({
       topic,
       audience: typeof body.audience === "string" ? body.audience : undefined,
@@ -40,6 +42,7 @@ export async function POST(req: NextRequest) {
       chapterCount: Number(body.chapterCount) || undefined,
       targetWords: Number(body.targetWords) || undefined,
       title: typeof body.title === "string" ? body.title : undefined,
+      author,
     });
 
     const { data: inserted, error: insErr } = await admin

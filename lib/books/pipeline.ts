@@ -14,6 +14,7 @@ import { buildSudokuBook, MIN_SUDOKU_PUZZLES, SUDOKU_DIFFICULTIES, type SudokuDi
 import { buildMazeBook, MIN_MAZES, MAZE_DIFFICULTIES, type MazeDifficulty } from "../generators/maze";
 import { buildColoringBook, MIN_COLORING_PAGES, COLORING_AGE_GROUPS, COLORING_STYLES, type ColoringAgeGroup, type ColoringStyle } from "../generators/coloring";
 import { generateWordList, generateMetadata } from "../ai";
+import { loadPublishingProfile, profileAuthor } from "../publishing/profile";
 import type { InteriorResult, CoverResult } from "../pdf";
 
 export type PipelineBookType = "word_search" | "sudoku" | "maze" | "coloring";
@@ -33,6 +34,7 @@ export interface BookGenInput {
   count?: number; // puzzle/page count
   ageGroup?: string; // coloring
   style?: string; // coloring
+  author?: string; // from the Publishing Profile (passed to the generator's author option)
 }
 
 interface BuildPlan {
@@ -62,7 +64,7 @@ export async function planBook(input: BookGenInput): Promise<BuildPlan> {
     return {
       bookType: "coloring", theme, title, difficulty: ageGroup, puzzleCount: pageCount, wordSource: null,
       config: { ageGroup, style }, metadata,
-      build: () => buildColoringBook({ theme, title, subtitle: metadata.subtitle, ageGroup, style, pageCount, backText: metadata.description }),
+      build: () => buildColoringBook({ theme, title, subtitle: metadata.subtitle, ageGroup, style, pageCount, backText: metadata.description, author: input.author }),
     };
   }
 
@@ -74,7 +76,7 @@ export async function planBook(input: BookGenInput): Promise<BuildPlan> {
     return {
       bookType: "maze", theme: input.theme?.trim() || "Maze", title, difficulty, puzzleCount: mazeCount, wordSource: null,
       config: {}, metadata,
-      build: () => buildMazeBook({ title, subtitle: metadata.subtitle, difficulty, mazeCount, backText: metadata.description }),
+      build: () => buildMazeBook({ title, subtitle: metadata.subtitle, difficulty, mazeCount, backText: metadata.description, author: input.author }),
     };
   }
 
@@ -86,7 +88,7 @@ export async function planBook(input: BookGenInput): Promise<BuildPlan> {
     return {
       bookType: "sudoku", theme: input.theme?.trim() || "Sudoku", title, difficulty, puzzleCount, wordSource: null,
       config: {}, metadata,
-      build: () => buildSudokuBook({ title, subtitle: metadata.subtitle, difficulty, puzzleCount, backText: metadata.description }),
+      build: () => buildSudokuBook({ title, subtitle: metadata.subtitle, difficulty, puzzleCount, backText: metadata.description, author: input.author }),
     };
   }
 
@@ -109,7 +111,7 @@ export async function planBook(input: BookGenInput): Promise<BuildPlan> {
   return {
     bookType: "word_search", theme, title, difficulty, puzzleCount, wordSource,
     config: { gridSize: cfg.gridSize, wordsPerPuzzle: cfg.wordsPerPuzzle }, metadata,
-    build: () => buildWordSearchBook({ theme, title, subtitle: metadata.subtitle, puzzleCount, difficulty, words, backText: metadata.description }),
+    build: () => buildWordSearchBook({ theme, title, subtitle: metadata.subtitle, puzzleCount, difficulty, words, backText: metadata.description, author: input.author }),
   };
 }
 
@@ -129,7 +131,10 @@ export async function generateAndStoreBook(
   opts?: { opportunity?: unknown; bundleId?: string | null }
 ): Promise<StoredBook> {
   const admin = getSupabaseAdminClient();
-  const plan = await planBook(input);
+  // Inherit the author from the Publishing Profile (passed to the generator's
+  // existing author option — no generator changes).
+  const author = input.author ?? profileAuthor(await loadPublishingProfile(userId));
+  const plan = await planBook({ ...input, author });
 
   const { data: inserted, error: insErr } = await admin
     .from("books")
@@ -143,7 +148,7 @@ export async function generateAndStoreBook(
       puzzle_count: plan.puzzleCount,
       trim_size: "8.5x11",
       word_source: plan.wordSource,
-      config: plan.config,
+      config: { ...plan.config, author },
       opportunity: opts?.opportunity ?? null,
       bundle_id: opts?.bundleId ?? null,
     })

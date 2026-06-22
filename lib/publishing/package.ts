@@ -23,6 +23,12 @@ export interface PublishContext {
   existingDescription?: string;
   existingKeywords?: string[];
   bleed?: boolean;
+  // Inherited from the Publishing Profile:
+  publisher?: string;
+  language?: string;
+  copyright?: string;
+  aiDisclosure?: string;
+  priceOverride?: number | null;
 }
 
 export interface PackageData {
@@ -46,10 +52,15 @@ export async function generatePackageData(ctx: PublishContext): Promise<PackageD
     title: ctx.title,
     subtitle: ctx.subtitle,
     author: ctx.author,
+    publisher: ctx.publisher,
+    language: ctx.language,
     trimSize: ctx.trim,
     bookType: ctx.bookType,
+    aiDisclosure: ctx.aiDisclosure,
+    copyright: ctx.copyright,
     opportunityScore: ctx.opportunityScore ?? null,
     pageCount: ctx.pageCount,
+    priceOverride: ctx.priceOverride ?? null,
     description,
     keywords: keywords.primary,
     categories,
