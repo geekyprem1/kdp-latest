@@ -90,6 +90,10 @@ export function CreateWizard() {
 
   // ── actions ──
   async function analyze() {
+    if (!topic.trim()) {
+      setError("Please enter a topic first.");
+      return;
+    }
     setError(null);
     setAnalyzing(true);
     try {
@@ -217,10 +221,20 @@ export function CreateWizard() {
             <div><label className={label}>Country (optional)</label><input className={field} value={country} onChange={(e) => setCountry(e.target.value)} placeholder="United States" /></div>
           </div>
           <div className="mt-5 flex items-center gap-4">
-            <button onClick={analyze} disabled={!topic.trim() || analyzing} className="rounded bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50">
+            <button onClick={analyze} disabled={analyzing} className="rounded bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50">
               {analyzing ? "Analyzing…" : "Analyze Opportunity →"}
             </button>
-            <button onClick={() => { setAnalysis(null); setStep(3); }} disabled={!topic.trim()} className="text-sm text-neutral-500 underline disabled:opacity-40">Skip analysis</button>
+            <button
+              onClick={() => {
+                if (!topic.trim()) { setError("Please enter a topic first."); return; }
+                setError(null);
+                setAnalysis(null);
+                setStep(3);
+              }}
+              className="text-sm text-neutral-500 underline"
+            >
+              Skip analysis
+            </button>
           </div>
         </div>
       )}
