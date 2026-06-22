@@ -56,11 +56,10 @@ function NicheCard({ idea, rank }: { idea: NicheIdea; rank: number }) {
   const c = BAND_COLORS[idea.band];
   const f = idea.factors;
   const stats: Array<[string, number]> = [
-    ["Demand", f.searchDemand],
+    ["Demand", f.demand],
     ["Competition", f.competition],
     ["Evergreen", f.evergreen],
-    ["Expansion", f.expansion],
-    ["KDP fit", f.kdpSuitability],
+    ["Monetization", f.monetization],
   ];
 
   return (
@@ -74,11 +73,11 @@ function NicheCard({ idea, rank }: { idea: NicheIdea; rank: number }) {
           className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold"
           style={{ background: c.bg, color: c.fg }}
         >
-          {idea.opportunityScore} · {idea.band}
+          {idea.opportunity} · {idea.band}
         </span>
       </div>
 
-      <div className="mt-3 grid grid-cols-5 gap-2 text-center">
+      <div className="mt-3 grid grid-cols-4 gap-2 text-center">
         {stats.map(([label, v]) => (
           <div key={label} className="rounded bg-neutral-50 py-1.5">
             <div className="text-[10px] uppercase tracking-wide text-neutral-400">{label}</div>
@@ -89,17 +88,17 @@ function NicheCard({ idea, rank }: { idea: NicheIdea; rank: number }) {
 
       <p className="mt-3 text-sm">
         <span className="font-medium">Recommended:</span>{" "}
-        {BOOK_TYPE_LABELS[idea.recommendedBookType]}
+        {BOOK_TYPE_LABELS[idea.recommendedBookType] ?? idea.recommendedBookType}
         <span className="text-neutral-400">
           {" "}
-          (also: {idea.bookTypes.map((t) => BOOK_TYPE_LABELS[t]).join(", ")})
+          (also: {idea.bookTypes.map((t) => BOOK_TYPE_LABELS[t] ?? t).join(", ")})
         </span>
       </p>
       <p className="mt-1 text-xs text-neutral-600">
         <span className="font-medium">Seasonal:</span> {idea.seasonal}
       </p>
       <p className="mt-0.5 text-xs text-neutral-600">
-        <span className="font-medium">Monetization:</span> {idea.monetization}
+        <span className="font-medium">Monetization:</span> {idea.monetizationNote}
       </p>
 
       <div className="mt-3">

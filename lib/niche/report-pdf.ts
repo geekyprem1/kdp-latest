@@ -12,7 +12,7 @@ const esc = (s: string): string =>
 
 function ideaCard(idea: NicheReport["ideas"][number], rank: number): string {
   const c = BAND_COLORS[idea.band];
-  const types = idea.bookTypes.map((t) => BOOK_TYPE_LABELS[t]).join(", ");
+  const types = idea.bookTypes.map((t) => BOOK_TYPE_LABELS[t] ?? t).join(", ");
   const f = idea.factors;
   const stat = (label: string, v: number) =>
     `<td><div class="stat-l">${label}</div><div class="stat-v">${v}</div></td>`;
@@ -23,22 +23,21 @@ function ideaCard(idea: NicheReport["ideas"][number], rank: number): string {
         <div class="rank">${rank}</div>
         <div class="niche">${esc(idea.niche)}</div>
         <div class="score" style="background:${c.bg};color:${c.fg}">
-          ${idea.opportunityScore} · ${idea.band}
+          ${idea.opportunity} · ${idea.band}
         </div>
       </div>
       <table class="stats">
         <tr>
-          ${stat("Demand", f.searchDemand)}
+          ${stat("Demand", f.demand)}
           ${stat("Competition", f.competition)}
           ${stat("Evergreen", f.evergreen)}
-          ${stat("Expansion", f.expansion)}
-          ${stat("KDP fit", f.kdpSuitability)}
+          ${stat("Monetization", f.monetization)}
         </tr>
       </table>
-      <div class="rec"><b>Recommended:</b> ${BOOK_TYPE_LABELS[idea.recommendedBookType]}
+      <div class="rec"><b>Recommended:</b> ${BOOK_TYPE_LABELS[idea.recommendedBookType] ?? idea.recommendedBookType}
         <span class="muted">&nbsp;(also: ${esc(types)})</span></div>
       <div class="notes"><b>Seasonal:</b> ${esc(idea.seasonal)}</div>
-      <div class="notes"><b>Monetization:</b> ${esc(idea.monetization)}</div>
+      <div class="notes"><b>Monetization:</b> ${esc(idea.monetizationNote)}</div>
     </div>`;
 }
 
@@ -67,7 +66,7 @@ export async function renderNicheReportPdf(report: NicheReport): Promise<Uint8Ar
   .niche { flex: 1; font-size: 12pt; font-weight: bold; }
   .score { font-size: 9pt; font-weight: bold; padding: 2pt 8pt; border-radius: 999px; white-space: nowrap; }
   .stats { width: 100%; margin: 6pt 0; border-collapse: collapse; }
-  .stats td { text-align: center; border: 1px solid #eee; padding: 3pt; width: 20%; }
+  .stats td { text-align: center; border: 1px solid #eee; padding: 3pt; width: 25%; }
   .stat-l { color: #777; font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.03em; }
   .stat-v { font-size: 12pt; font-weight: bold; }
   .rec { font-size: 9.5pt; margin-top: 2pt; }

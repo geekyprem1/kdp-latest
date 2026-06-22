@@ -17,6 +17,7 @@
     "test:sudoku": "tsx scripts/test-sudoku.ts",
     "test:maze": "tsx scripts/test-maze.ts",
     "test:coloring": "tsx scripts/test-coloring.ts",
+    "test:opportunity": "tsx scripts/test-opportunity.ts",
     "coloring:samples": "tsx scripts/generate-coloring-samples.ts",
     "story:poc": "node --env-file=.env.local --import tsx scripts/story-poc.ts"
   },

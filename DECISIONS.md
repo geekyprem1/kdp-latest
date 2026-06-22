@@ -2,6 +2,23 @@
 
 Architecture decisions, newest first. Each: context → decision → consequences.
 
+## ADR-015 — Shared Book Opportunity Engine
+**Context:** Niche scoring was niche-specific (`lib/niche/score.ts`, 5 factors incl.
+expansion/kdpSuitability). The product strategy needs one reusable engine for both
+Niche Research and the Create flow, with the named scores Demand / Competition /
+Evergreen / Monetization → Opportunity.
+**Decision:** Extract `lib/opportunity/` as the shared engine. Factors collapse to
+four (expansion + price potential fold into **Monetization**; KDP-suitability
+folds into the recommended-type fit). `Opportunity = 0.30·Demand +
+0.25·(100−Competition) + 0.15·Evergreen + 0.30·Monetization`. Recommended book
+types now include **ebook** (and drop planner). `lib/niche/score.ts` and
+`lib/niche/types.ts` re-export from `lib/opportunity` for back-compat. Each book
+gets an `opportunity` jsonb snapshot (migration `0005`).
+**Consequences:** One tunable scoring source (ADR-011 still holds: AI estimates
+factors, app computes the score). Niche Research UI/PDF updated to 4 factors.
+Pre-existing reports with the old factor shape render with safe fallbacks. Verified
+by `npm run test:opportunity` (6/6) and a live niche run.
+
 ## ADR-014 — Coloring: FLUX line art with pixel validation + bleed
 **Context:** Coloring Books are the first AI-image book type and need clean,
 printable black-and-white line art that fills the page.

@@ -1,51 +1,37 @@
-/** Book types the engine can recommend for a niche. */
-export type NicheBookType =
-  | "word_search"
-  | "sudoku"
-  | "maze"
-  | "planner"
-  | "coloring"
-  | "story";
+/**
+ * Niche Research types. Built on the shared Book Opportunity Engine
+ * (`lib/opportunity`) — re-exports its types for backward compatibility.
+ */
 
-export const BOOK_TYPE_LABELS: Record<NicheBookType, string> = {
-  word_search: "Word Search",
-  sudoku: "Sudoku",
-  maze: "Maze",
-  planner: "Planner",
-  coloring: "Coloring Book",
-  story: "Story Book",
-};
+import type {
+  BookType,
+  OpportunityFactors,
+  OpportunityBand,
+} from "../opportunity/types";
 
-export const ALL_BOOK_TYPES: NicheBookType[] = [
-  "word_search",
-  "sudoku",
-  "maze",
-  "planner",
-  "coloring",
-  "story",
-];
+export {
+  BOOK_TYPE_LABELS,
+  ALL_BOOK_TYPES,
+} from "../opportunity/types";
+export type {
+  BookType,
+  OpportunityFactors,
+  OpportunityBand,
+  RecommendedType,
+} from "../opportunity/types";
 
-/** Raw 0–100 factor estimates (from the AI), used by the scoring engine. */
-export interface NicheFactors {
-  searchDemand: number;
-  competition: number; // higher = more competition = worse
-  evergreen: number;
-  expansion: number;
-  kdpSuitability: number;
-}
-
-export type OpportunityBand = "Low" | "Medium" | "High" | "Excellent";
+/** @deprecated alias kept for existing imports. */
+export type NicheBookType = BookType;
 
 export interface NicheIdea {
   niche: string;
-  factors: NicheFactors;
-  seasonal: string;
-  monetization: string;
-  recommendedBookType: NicheBookType;
-  bookTypes: NicheBookType[];
-  /** Computed locally by the scoring engine. */
-  opportunityScore: number;
+  factors: OpportunityFactors; // demand, competition, evergreen, monetization
+  opportunity: number; // computed composite
   band: OpportunityBand;
+  seasonal: string;
+  monetizationNote: string;
+  recommendedBookType: BookType;
+  bookTypes: BookType[];
 }
 
 export interface NicheReportInput {

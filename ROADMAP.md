@@ -148,9 +148,11 @@ proof. Design: [STORYBOOK_ARCHITECTURE.md](STORYBOOK_ARCHITECTURE.md).
 See [EBOOK_BLUEPRINT.md](EBOOK_BLUEPRINT.md). Re-sequenced to differentiate from
 "KDP Master" (opportunity-first, quality-gated, multi-format):
 
-- **Phase 6 — Book Opportunity Engine** (refactor `lib/niche/score` → shared
-  `lib/opportunity`; Demand/Competition/Evergreen/Monetization → Opportunity;
-  recommended book types; inline in Create + snapshot on books) ⏳ next
+- **Phase 6 — Book Opportunity Engine** ✅ COMPLETE — shared `lib/opportunity`
+  (Demand/Competition/Evergreen/Monetization → Opportunity composite + band +
+  recommended book types incl. ebook); Niche Research repointed to it;
+  `books.opportunity` snapshot column (migration `0005`); `npm run test:opportunity`
+  (6/6). Inline-in-Create wiring lands with Phase 7.
 - **Phase 7 — Unified Create wizard** (one 4-step flow for all types) ⏳
 - **Phase 8 — Async infra** (`generation_jobs` + Trigger.dev) ⏳
 - **Phase 9 — Ebook Creator** (outline → chapter writer + rewrite/expand →
