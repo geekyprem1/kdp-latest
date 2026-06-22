@@ -135,13 +135,28 @@ First AI-image book type. Bleed-enabled (edge-to-edge art).
 > generates Dinosaur / Unicorn / Halloween. (Image DPI is bounded by FLUX
 > Schnell's ~1MP output — fine for line art; upscaling is a future enhancement.)
 
-## Later
+## Storybook POC ✅ COMPLETE (proof harness)
 
-- Phase 6 — Planners
-- Phase 6 — Coloring Books (Replicate FLUX; **enables bleed by default for this type**)
-- Phase 7 — Trigger.dev async jobs (for image-heavy generation)
-- Phase 8 — Billing (Stripe + JVZoo/W+), credits, OTO gating
-- Phase 9 — Templates (OTO3), Admin dashboard, hardening
+Character-consistency proof harness (`npm run story:poc`): character bible +
+locked reference (FLUX Schnell) + 6 scenes (FLUX Kontext, reference-conditioned)
++ Gemini vision consistency judge + visual report + cost/time. Verified offline;
+real proof needs `REPLICATE_API_TOKEN`. Full Storybook **paused** pending the
+proof. Design: [STORYBOOK_ARCHITECTURE.md](STORYBOOK_ARCHITECTURE.md).
+
+## Next — Ebook & Opportunity blueprint (design done)
+
+See [EBOOK_BLUEPRINT.md](EBOOK_BLUEPRINT.md). Re-sequenced to differentiate from
+"KDP Master" (opportunity-first, quality-gated, multi-format):
+
+- **Phase 6 — Book Opportunity Engine** (refactor `lib/niche/score` → shared
+  `lib/opportunity`; Demand/Competition/Evergreen/Monetization → Opportunity;
+  recommended book types; inline in Create + snapshot on books) ⏳ next
+- **Phase 7 — Unified Create wizard** (one 4-step flow for all types) ⏳
+- **Phase 8 — Async infra** (`generation_jobs` + Trigger.dev) ⏳
+- **Phase 9 — Ebook Creator** (outline → chapter writer + rewrite/expand →
+  quality gate → PDF/EPUB/DOCX → cover generator) ⏳
+- **Phase 10 — Storybook** (resume; reuses async + cover + Opportunity) ⏳
+- **Later** — Series planner, A+ content, Planners, Billing/Credits, Admin, Agency
 
 ## Production defaults (current)
 
