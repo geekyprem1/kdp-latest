@@ -73,6 +73,17 @@ API: `POST /api/word-search/generate` with
 `{ theme, puzzleCount, gridSize, difficulty, part: "interior"|"cover" }` →
 streams a PDF. (≥11 puzzles needed to clear KDP's 24-page minimum.)
 
+### Sample books for KDP upload testing
+
+Three production-quality books (Dinosaur / Halloween / Christmas, 83pp each) live
+in [examples/](examples/README.md), all passing automated KDP validation
+([examples/VALIDATION.md](examples/VALIDATION.md)). Regenerate + revalidate:
+
+```bash
+npm run examples:generate
+npm run examples:validate
+```
+
 ## ✅ Gate success criteria
 
 1. `gate:verify` passes (geometry). — **automated, currently passing**

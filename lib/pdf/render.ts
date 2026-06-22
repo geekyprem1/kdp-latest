@@ -36,6 +36,45 @@ export interface RenderOptions {
   heightIn: number;
 }
 
+export interface PngOptions {
+  widthIn: number;
+  heightIn: number;
+  /** Render resolution for the preview image. Default 150 DPI. */
+  dpi?: number;
+}
+
+const CSS_PX_PER_IN = 96;
+
+/**
+ * Render a single-page HTML document to a PNG at a physical size — used for
+ * preview screenshots. The page is sized in CSS inches; deviceScaleFactor
+ * upscales to the requested DPI.
+ */
+export async function renderPng(
+  html: string,
+  opts: PngOptions
+): Promise<Uint8Array> {
+  const dpi = opts.dpi ?? 150;
+  const width = Math.round(opts.widthIn * CSS_PX_PER_IN);
+  const height = Math.round(opts.heightIn * CSS_PX_PER_IN);
+  const browser = await getBrowser();
+  const page = await browser.newPage();
+  try {
+    await page.setViewport({
+      width,
+      height,
+      deviceScaleFactor: dpi / CSS_PX_PER_IN,
+    });
+    await page.setContent(html, { waitUntil: "load" });
+    return await page.screenshot({
+      type: "png",
+      clip: { x: 0, y: 0, width, height },
+    });
+  } finally {
+    await page.close();
+  }
+}
+
 /**
  * Render HTML to a PDF buffer at the given physical size.
  * Fonts are embedded by Chromium automatically.

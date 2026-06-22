@@ -37,6 +37,11 @@ the Next server. Run `npm run ws:generate` for the CLI check.
 > ⏳ As with all printed output, the authoritative final check is a KDP previewer
 > upload of a generated word-search interior + cover.
 
+**Sample books** — 3 production-quality books (Dinosaur / Halloween / Christmas,
+83pp, 8.5×11, no-bleed) generated in `examples/`, all passing automated KDP
+validation. Ready for KDP upload testing. `npm run examples:generate` /
+`examples:validate`.
+
 No Sudoku, Maze, Coloring, Billing, Stripe, Templates, or Admin was started —
 Word Search first, as instructed.
 

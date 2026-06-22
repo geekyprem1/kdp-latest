@@ -29,3 +29,7 @@ next-env.d.ts
 
 # gate output (generated PDFs for KDP upload)
 /output/
+
+# sample-book PDFs are large and regenerable (`npm run examples:generate`);
+# keep the lightweight previews + reports in git, not the multi-MB PDFs.
+examples/**/*.pdf

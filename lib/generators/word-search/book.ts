@@ -17,6 +17,10 @@ import type { Difficulty, WordSearchInput, WordSearchPuzzle } from "./types";
 
 export interface WordSearchBookOptions extends Partial<WordSearchInput> {
   theme: string;
+  /** Optional overrides for production books; sensible defaults otherwise. */
+  title?: string;
+  subtitle?: string;
+  author?: string;
 }
 
 export interface ResolvedBookConfig {
@@ -53,9 +57,9 @@ export function resolveConfig(opts: WordSearchBookOptions): ResolvedBookConfig {
     difficulty,
     wordsPerPuzzle,
     seed,
-    title: `${theme} Word Search`,
-    subtitle: `${puzzleCount} Puzzles · ${difficulty} level`,
-    author: DEFAULTS.author,
+    title: opts.title ?? `${theme} Word Search`,
+    subtitle: opts.subtitle ?? `${puzzleCount} Puzzles · ${difficulty} level`,
+    author: opts.author ?? DEFAULTS.author,
   };
 }
 
@@ -83,9 +87,12 @@ export function buildInteriorPages(
   pages.push({
     showPageNumber: false,
     html: `
-      <div style="display:flex;flex-direction:column;height:100%;justify-content:center;text-align:center">
-        <h1>${cfg.title}</h1>
-        <h2 style="color:#555;font-weight:normal">${cfg.subtitle}</h2>
+      <div style="display:flex;flex-direction:column;height:100%;justify-content:center;align-items:center;text-align:center">
+        <div style="font-size:12pt;letter-spacing:0.25em;text-transform:uppercase;color:#999">${cfg.theme}</div>
+        <h1 style="font-size:40pt;margin:0.2in 0 0.1in;line-height:1.1">${cfg.title}</h1>
+        <div style="width:2.4in;border-top:2px solid #222;margin:0.18in 0"></div>
+        <h2 style="font-weight:normal;color:#444;margin:0;font-size:15pt">${cfg.subtitle}</h2>
+        <div style="margin-top:0.7in;font-size:13pt;color:#222">${cfg.author}</div>
       </div>`,
   });
 
