@@ -70,6 +70,7 @@ export default async function MyBooksPage() {
                   <a href={`/api/ebook/${b.id}/export?format=pdf`} className="rounded border border-neutral-900 px-3 py-1.5 text-xs font-medium">PDF</a>
                   <a href={`/api/ebook/${b.id}/export?format=epub`} className="rounded border border-neutral-900 px-3 py-1.5 text-xs font-medium">EPUB</a>
                   <a href={`/api/ebook/${b.id}/export?format=docx`} className="rounded border border-neutral-900 px-3 py-1.5 text-xs font-medium">DOCX</a>
+                  <Link href={`/dashboard/books/${b.id}`} className="rounded border border-neutral-300 px-3 py-1.5 text-xs font-medium">Publish Package</Link>
                 </div>
               )}
 
@@ -87,6 +88,7 @@ export default async function MyBooksPage() {
                   >
                     Cover PDF
                   </a>
+                  <Link href={`/dashboard/books/${b.id}`} className="rounded border border-neutral-300 px-3 py-1.5 text-xs font-medium">Publish Package</Link>
                 </div>
               )}
             </li>

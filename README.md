@@ -21,6 +21,7 @@ AI-powered Amazon KDP book creation platform.
 | Opportunity Engine + Create wizard | ✅ | `lib/opportunity/` + 4-step wizard with per-type recommendation badges |
 | Cover Generator | ✅ | `lib/cover/` — AI brief (OpenRouter) + FLUX background + typeset overlay → 3 variations, library, use-for-book |
 | Bundle Generator | ✅ | one topic → multi-book bundle; reuses the shared book pipeline (`lib/books/pipeline.ts`) + Opportunity Engine; ZIP export |
+| KDP Publish Package | ✅ | `lib/publishing/` — per book: metadata.json, keywords, description, categories, alt titles, checklist → ZIP (interior + cover + 6 files) |
 | Auth | ✅ | Supabase (Google + email magic link), `proxy.ts` gating `/dashboard` |
 | Dashboard | ✅ | Overview, Niche Research, Create Book, My Books, Download History |
 | Niche Research | ✅ | AI → 20 scored niches, opportunity score, recommendations, save, PDF export, one-click generate |

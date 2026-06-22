@@ -2,6 +2,23 @@
 
 Architecture decisions, newest first. Each: context → decision → consequences.
 
+## ADR-020 — KDP Publish Package: stored artifacts, ZIP on demand
+**Context:** Every book should yield a ready-to-publish KDP bundle without
+touching the generators.
+**Decision:** New `lib/publishing/` layer (keywords / categories / titles /
+metadata+description / package) reusing OpenRouter. `POST /api/publish-package`
+generates artifacts (7 primary + 20 long-tail keywords, 3–5 categories, 10 alt
+titles, 150–400-word description, metadata.json with AI disclosure + suggested
+price) and upserts one row per book (`book_publish_packages`, migration `0009`,
+unique book_id). `GET /api/publish-package/[id]` builds the ZIP on demand from the
+stored record + the book's assets: stored PDFs for puzzle/coloring, and for
+ebooks the interior PDF is rebuilt via the existing `buildEbookPdf` (cover = PNG).
+The 6 text files + checklist are derived from the stored record (no AI on
+download). UI: Publishing Package section on `/dashboard/books/[id]` + a link from
+My Books.
+**Consequences:** Generators untouched; one package per book, always current with
+stored metadata; works for all 5 book types via one type-agnostic path.
+
 ## ADR-019 — Bundle Generator orchestrates a shared book pipeline
 **Context:** Generate several books from one topic without duplicating generator
 or orchestration code.
