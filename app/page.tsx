@@ -5,8 +5,8 @@ export default function Home() {
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col justify-center px-6">
       <h1 className="text-4xl font-bold tracking-tight">KDP Pocket AI</h1>
       <p className="mt-3 text-lg text-neutral-600">
-        Create and download Amazon KDP-ready word search books in minutes. Enter a
-        niche, pick a difficulty, and get a print-ready interior + cover PDF.
+        Research profitable niches, then create and download Amazon KDP-ready
+        books in minutes — puzzle books, coloring books, and ebooks.
       </p>
 
       <div className="mt-8 flex gap-3">
@@ -25,9 +25,9 @@ export default function Home() {
       </div>
 
       <ul className="mt-10 space-y-2 text-sm text-neutral-600">
-        <li>• Any niche — AI-generated themed word lists</li>
-        <li>• Puzzle pages + complete answer key</li>
-        <li>• KDP-validated 8.5×11 interior &amp; cover PDFs</li>
+        <li>• Word Search, Sudoku, Maze, Coloring Book &amp; Ebook generators</li>
+        <li>• Niche Research + Opportunity Score to find what sells</li>
+        <li>• KDP-validated print PDFs — plus EPUB &amp; DOCX for ebooks</li>
         <li>• Auto-generated KDP metadata (title, subtitle, description, keywords)</li>
       </ul>
     </main>
