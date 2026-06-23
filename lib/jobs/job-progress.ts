@@ -78,6 +78,34 @@ export async function markProcessing(jobId: string): Promise<void> {
   await updateJob(jobId, { status: "processing", progress: 5, current_step: "Starting", started_at: new Date().toISOString(), error_message: null });
 }
 
+/**
+ * Atomically claim a queued job (queued → processing). Returns true only if THIS
+ * caller won the claim — so the web process and the optional worker can both run
+ * without double-executing a job.
+ */
+export async function claimJob(jobId: string): Promise<boolean> {
+  const now = new Date().toISOString();
+  const { data } = await getSupabaseAdminClient()
+    .from("generation_jobs")
+    .update({ status: "processing", progress: 5, current_step: "Starting", started_at: now, error_message: null, updated_at: now })
+    .eq("id", jobId)
+    .eq("status", "queued")
+    .select("id");
+  return (data?.length ?? 0) > 0;
+}
+
+/** Reset jobs stuck in 'processing' (e.g. after a server crash) back to queued. */
+export async function reclaimStaleJobs(thresholdMinutes = 10): Promise<string[]> {
+  const cutoff = new Date(Date.now() - thresholdMinutes * 60_000).toISOString();
+  const { data } = await getSupabaseAdminClient()
+    .from("generation_jobs")
+    .update({ status: "queued", current_step: "Recovering", updated_at: new Date().toISOString() })
+    .eq("status", "processing")
+    .lt("updated_at", cutoff)
+    .select("id");
+  return ((data ?? []) as Array<{ id: string }>).map((r) => r.id);
+}
+
 export async function markCompleted(jobId: string, bookId: string): Promise<void> {
   await updateJob(jobId, { status: "completed", progress: 100, current_step: "Complete", book_id: bookId, completed_at: new Date().toISOString() });
 }

@@ -7,7 +7,7 @@
 import { getSupabaseAdminClient } from "../supabase/admin";
 import { generateAndStoreBook, type PipelineBookType } from "../books/pipeline";
 import { generateAndStoreEbook } from "../books/ebook-pipeline";
-import { markProcessing, markCompleted, markFailed, progressUpdater } from "./job-progress";
+import { claimJob, markCompleted, markFailed, progressUpdater } from "./job-progress";
 
 interface JobRow {
   id: string;
@@ -24,9 +24,10 @@ export async function runJob(jobId: string): Promise<void> {
     .eq("id", jobId)
     .single();
   const j = job as JobRow | null;
-  if (!j || j.status === "completed" || j.status === "cancelled") return;
+  if (!j) return;
 
-  await markProcessing(jobId);
+  // Atomic claim: only the winner (web process OR worker) proceeds.
+  if (!(await claimJob(jobId))) return;
   const onProgress = progressUpdater(jobId);
   const input = (j.input ?? {}) as Record<string, unknown>;
 

@@ -179,7 +179,9 @@ See [EBOOK_BLUEPRINT.md](EBOOK_BLUEPRINT.md). Re-sequenced to differentiate from
   `/api/ebook` enqueue + return immediately; wizard → `/dashboard/in-progress`.
   Progress bar, per-type timeline, Resume/Retry/Cancel/Delete, queued-job
   recovery, dashboard widgets + completion notifications. Option 1 (same-server
-  async); generators untouched; Storybook-ready via a new job_type.
+  async) with **atomic job claim** + optional polling worker (`npm run worker`)
+  for restart resilience (no Trigger.dev). Generators untouched; Storybook-ready
+  via a new job_type.
 - **Author & Publishing Profile** ✅ COMPLETE — per-user defaults
   (author/pen/publisher/language/trim/price/AI-disclosure/copyright) on `profiles`
   (migration `0010`); `/dashboard/settings`. Inherited by every book (author via

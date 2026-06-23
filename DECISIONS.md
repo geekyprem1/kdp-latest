@@ -16,10 +16,15 @@ logout / close-browser are fine; the UI polls via `router.refresh()`.
 **Recovery/retry:** `input` is persisted so any job can be re-run; queued jobs are
 re-kicked on the In-Progress page (`recoverQueuedJobs`); failed/stuck jobs have a
 Retry/Resume action. A `running` set prevents double execution per process.
+**Atomic claim + optional worker:** jobs are claimed atomically (queued →
+processing via a conditional update), so an optional standalone worker
+(`npm run worker`, `scripts/worker.ts`) can run alongside the web server with no
+double-execution. The worker also reclaims jobs stuck in `processing`
+(`reclaimStaleJobs`) — true restart resilience without Trigger.dev. Run zero or one.
 **Consequences:** Works on a single long-running server (not serverless cold-stop;
-those use Retry). Generators untouched; Bundle stays synchronous. Designed so a
-durable worker or Trigger.dev later only changes `lib/jobs/job-queue.ts`. Storybook
-(multi-minute) drops in via a new job_type + runner branch — no architecture change.
+those use Retry, or run the worker). Generators untouched; Bundle stays
+synchronous. Storybook (multi-minute) drops in via a new job_type + runner branch
+— no architecture change.
 
 ## ADR-021 — Author/Publishing Profile inherited without touching generators
 **Context:** Every book should inherit author/pen/publisher/language/trim/price/
