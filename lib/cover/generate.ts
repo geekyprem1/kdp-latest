@@ -1,6 +1,10 @@
 /**
  * Cover Generator V2 — each concept gets its own distinct AI brief + image prompt.
  * Safe-zone layouts, genre-aware typography, detailed scoring.
+ *
+ * Observability: gradient fallback is always logged via console.error.
+ * Retry: character-required genres (kids, puzzle) get one automatic retry before
+ * accepting a gradient fallback, to avoid silent compliance failures.
  */
 
 import { renderPng } from "../pdf/render";
@@ -24,7 +28,44 @@ const CONCEPT_GRADIENTS: Record<ConceptLayout, [[string, string], [string, strin
   modernCommercial:  [["#0c1445","#1a237e"],["#4a044e","#701a75"],["#052e16","#14532d"]],
 };
 
+/** Genres that require at least one character and get a retry on FLUX failure. */
+const CHARACTER_GENRES = new Set(["kids", "puzzle"]);
+
 const dataUri = (b: Uint8Array) => `data:image/png;base64,${Buffer.from(b).toString("base64")}`;
+
+async function tryFluxWithRetry(
+  brief: CoverBrief,
+  seed: number,
+  genre: string,
+  layout: ConceptLayout,
+  gradientIdx: number
+): Promise<CoverBg> {
+  if (!isReplicateConfigured()) {
+    return { kind: "gradient", c1: CONCEPT_GRADIENTS[layout][gradientIdx % 3][0], c2: CONCEPT_GRADIENTS[layout][gradientIdx % 3][1] };
+  }
+
+  // First attempt
+  try {
+    const art = await fluxSchnell({ prompt: brief.imagePrompt, seed, aspectRatio: "2:3" });
+    return { kind: "image", dataUri: dataUri(art) };
+  } catch (err) {
+    // Character-required genres get one retry with a shifted seed before accepting gradient
+    if (CHARACTER_GENRES.has(genre)) {
+      try {
+        const art = await fluxSchnell({ prompt: brief.imagePrompt, seed: seed + 777, aspectRatio: "2:3" });
+        console.error(`[cover] Replicate first attempt failed (genre=${genre} layout=${layout}), retry succeeded.`);
+        return { kind: "image", dataUri: dataUri(art) };
+      } catch (retryErr) {
+        console.error(`[cover] Replicate retry also failed (genre=${genre} layout=${layout} seed=${seed}):`, retryErr);
+      }
+    } else {
+      console.error(`[cover] Replicate fallback (genre=${genre} layout=${layout} seed=${seed}):`, err);
+    }
+  }
+
+  const [c1, c2] = CONCEPT_GRADIENTS[layout][gradientIdx % 3];
+  return { kind: "gradient", c1, c2 };
+}
 
 export async function buildOneConcept(
   input: CoverInput,
@@ -33,19 +74,7 @@ export async function buildOneConcept(
   seed: number,
   gradientIdx = 0
 ): Promise<BuiltConcept> {
-  let bg: CoverBg;
-  if (isReplicateConfigured()) {
-    try {
-      const art = await fluxSchnell({ prompt: brief.imagePrompt, seed, aspectRatio: "2:3" });
-      bg = { kind: "image", dataUri: dataUri(art) };
-    } catch {
-      const [c1, c2] = CONCEPT_GRADIENTS[layout][gradientIdx % 3];
-      bg = { kind: "gradient", c1, c2 };
-    }
-  } else {
-    const [c1, c2] = CONCEPT_GRADIENTS[layout][gradientIdx % 3];
-    bg = { kind: "gradient", c1, c2 };
-  }
+  const bg = await tryFluxWithRetry(brief, seed, input.genre, layout, gradientIdx);
 
   const html = coverHtml({
     genre: input.genre,
@@ -64,6 +93,7 @@ export async function buildOneConcept(
     hasAuthor: Boolean(input.author?.trim()),
     titleLen: input.title.length,
     layout,
+    genre: input.genre,
   });
 
   return {

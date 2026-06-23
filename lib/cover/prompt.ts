@@ -2,26 +2,36 @@
  * V2 cover brief builder. Uses title, subtitle, audience, niche, genre, and
  * opportunity score to produce richer, concept-specific AI image prompts.
  * Each concept gets a DIFFERENT prompt so the three concepts feel genuinely distinct.
+ *
+ * Genre enforcement: character-required genres (kids, puzzle) append a hard constraint
+ * to every prompt so FLUX Schnell always produces compliant imagery.
  */
 
 import { generateJson } from "../ai/provider";
 import { isAiConfigured } from "../ai/models";
 import { COVER_GENRE_LABELS, type CoverBrief, type CoverInput, type ConceptLayout } from "./types";
 
-// Per-genre: mood, color palette cue, visual motif, and design language
-const GENRE_PROFILE: Record<string, {
+interface GenreProfile {
   mood: string;
   palette: string;
   motif: string;
   designLanguage: string;
   accentColor: string;
-}> = {
+  /** Appended verbatim to EVERY image prompt for this genre. Null for genres without hard constraints. */
+  hardConstraint: string | null;
+  /** Quality suffix for the FLUX prompt (replaces generic "professional book cover photography quality"). */
+  promptQuality: string;
+}
+
+const GENRE_PROFILE: Record<string, GenreProfile> = {
   business: {
     mood: "confident, authoritative, premium",
     palette: "deep navy, charcoal, gold accents",
     motif: "geometric abstraction, city skylines, upward trajectories, clean corporate shapes",
     designLanguage: "clean bold sans-serif, strong title dominance, restrained white space",
     accentColor: "#c9a84c",
+    hardConstraint: null,
+    promptQuality: "professional book cover photography quality",
   },
   self_help: {
     mood: "hopeful, uplifting, warm, transformational",
@@ -29,6 +39,8 @@ const GENRE_PROFILE: Record<string, {
     motif: "open roads, sunrise over mountains, blooming nature, person breaking free",
     designLanguage: "professional typography, high contrast, motivational energy",
     accentColor: "#e67e22",
+    hardConstraint: null,
+    promptQuality: "professional book cover photography quality",
   },
   puzzle: {
     mood: "energetic, playful, bright, fun",
@@ -36,6 +48,8 @@ const GENRE_PROFILE: Record<string, {
     motif: "bold geometric puzzle pieces, brain icons, activity-book energy, pop art patterns",
     designLanguage: "large playful titles, uppercase, bright saturated colors, strong border elements",
     accentColor: "#f39c12",
+    hardConstraint: "Bright bold illustration with multiple saturated primary colors (red, yellow, blue, green). Fun activity-book energy. NOT monochromatic. NOT dark or moody. NOT abstract-only. Include recognizable puzzle or game visual elements.",
+    promptQuality: "bold colorful activity book cover illustration quality",
   },
   kids: {
     mood: "cheerful, friendly, magical, safe",
@@ -43,6 +57,8 @@ const GENRE_PROFILE: Record<string, {
     motif: "cute animal characters, cartoon landscapes, playful adventure scenes, friendly creatures",
     designLanguage: "rounded friendly typography, strong visual hierarchy, bold color blocking",
     accentColor: "#9b59b6",
+    hardConstraint: "MUST prominently feature at least one cute cartoon animal character as the clear focal point — a friendly animal with expressive face and detailed body, centered in the composition. Bright rainbow colors: grass green, sky blue, sunshine yellow, warm orange. Children's book illustration style. NOT abstract. NOT geometric shapes only. NOT gradient-only background without a character. The animal character must be clearly recognizable and occupy the center of the frame.",
+    promptQuality: "children's book illustration quality, vibrant cartoon artwork, highly detailed cute animal character",
   },
   coloring: {
     mood: "calm, creative, inviting, gentle",
@@ -50,6 +66,8 @@ const GENRE_PROFILE: Record<string, {
     motif: "intricate floral patterns, mandala-inspired art, nature scenes with detailed outlines",
     designLanguage: "bold outlined typography, light airy feel, lots of breathing room",
     accentColor: "#1abc9c",
+    hardConstraint: "Multiple distinct colors visible: soft pastels with variety. NOT monochromatic. Include at least 4 distinct color tones. Gentle artistic feel with visible detail.",
+    promptQuality: "coloring book cover art quality, soft pastel illustration",
   },
   fiction: {
     mood: "atmospheric, cinematic, mysterious, evocative",
@@ -57,6 +75,8 @@ const GENRE_PROFILE: Record<string, {
     motif: "cinematic dramatic landscapes, silhouettes against dramatic skies, atmospheric fog and light",
     designLanguage: "cinematic typography, large impact title, dramatic atmosphere",
     accentColor: "#c0392b",
+    hardConstraint: null,
+    promptQuality: "cinematic professional book cover photography quality",
   },
 };
 
@@ -72,8 +92,12 @@ function fallbackBrief(input: CoverInput, layout: ConceptLayout): CoverBrief {
   const audienceStr = input.audience ? `audience: ${input.audience}` : "";
   const nicheStr = input.niche ? `niche: ${input.niche}` : "";
   const context = [audienceStr, nicheStr].filter(Boolean).join(", ");
+  const basePrompt = `${gp.motif}, ${gp.mood} mood, ${gp.palette}, ${CONCEPT_IMAGE_DIRECTION[layout]}, vertical book cover composition, ${gp.promptQuality}, no text, no letters, no words. ${context}`;
+  const imagePrompt = gp.hardConstraint
+    ? `${basePrompt} ${gp.hardConstraint}`
+    : basePrompt;
   return {
-    imagePrompt: `${gp.motif}, ${gp.mood} mood, ${gp.palette}, ${CONCEPT_IMAGE_DIRECTION[layout]}, vertical book cover composition, professional publishing quality, no text, no letters, no words. ${context}`,
+    imagePrompt,
     accentColor: gp.accentColor,
     layout: "Title prominent, subtitle below, author at the bottom.",
     typography: `${gp.designLanguage}. Strong display title, clean subtitle, understated author line.`,
@@ -96,13 +120,21 @@ export async function generateConceptBrief(
     ? `Opportunity score: ${input.opportunityScore}/100 — this book has strong market demand.`
     : "";
 
+  const constraintNote = gp.hardConstraint
+    ? `\nCRITICAL genre requirement: ${gp.hardConstraint}`
+    : "";
+
+  const systemPrompt = gp.hardConstraint
+    ? `You are an expert Amazon KDP book cover art director. You create image prompts that result in covers competitive with top-selling books. Reply with JSON only. Never include text, letters, or words in image prompts.\n\nCRITICAL: This is a ${COVER_GENRE_LABELS[input.genre]} cover. ${gp.hardConstraint} This requirement is non-negotiable — every prompt you write MUST satisfy it.`
+    : `You are an expert Amazon KDP book cover art director. You create image prompts that result in covers competitive with top-selling books. Reply with JSON only. Never include text, letters, or words in image prompts.`;
+
   try {
     const { data, model } = await generateJson<{
       imagePrompt: unknown;
       accentColor: unknown;
       typography: unknown;
     }>({
-      system: `You are an expert Amazon KDP book cover art director. You create image prompts that result in covers competitive with top-selling books. Reply with JSON only. Never include text, letters, or words in image prompts.`,
+      system: systemPrompt,
       prompt: `Create a cover image brief for this specific layout concept: "${layout}".
 
 Book details:
@@ -116,13 +148,13 @@ ${opportunityCtx}
 
 Genre design language: ${gp.designLanguage}
 Genre palette: ${gp.palette}
-Genre motif: ${gp.motif}
+Genre motif: ${gp.motif}${constraintNote}
 
 Layout concept direction: ${CONCEPT_IMAGE_DIRECTION[layout]}
 
 Return JSON:
 {
-  "imagePrompt": string,  // Vivid, specific 2-3 sentence prompt for BACKGROUND ARTWORK ONLY. No text. No letters. Vertical book cover. Professional publishing quality. Reference the specific mood, visual motif and palette for this genre. Make it unique to THIS layout concept.
+  "imagePrompt": string,  // Vivid, specific 2-3 sentence prompt for BACKGROUND ARTWORK ONLY. No text. No letters. Vertical book cover. ${gp.promptQuality}. Reference the specific mood, visual motif and palette for this genre. Make it unique to THIS layout concept.${gp.hardConstraint ? " MUST satisfy the genre character requirement stated above." : ""}
   "accentColor": string,  // Best hex color for text/design accents on this cover (e.g. "#c9a84c")
   "typography": string    // 1 sentence on font and text treatment for this specific concept
 }`,
@@ -135,8 +167,14 @@ Return JSON:
       },
     });
 
+    // Always append the hard constraint to the final FLUX prompt so it can never be omitted
+    const basePrompt = `${(data.imagePrompt as string).trim()}, no text, no letters, no words, no title, ${gp.promptQuality}`;
+    const imagePrompt = gp.hardConstraint
+      ? `${basePrompt}. ${gp.hardConstraint}`
+      : basePrompt;
+
     return {
-      imagePrompt: `${(data.imagePrompt as string).trim()}, no text, no letters, no words, no title, professional book cover photography quality`,
+      imagePrompt,
       accentColor: typeof data.accentColor === "string" && /^#[0-9a-f]{6}$/i.test(data.accentColor)
         ? data.accentColor
         : gp.accentColor,

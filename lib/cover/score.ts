@@ -1,5 +1,6 @@
 /**
- * V2 cover scoring — detailed 5-dimension breakdown.
+ * V2 cover scoring — detailed 6-dimension breakdown.
+ * genreMatch is now pixel-based for colorful genres (kids, puzzle, coloring).
  * Returns ScoreBreakdown with individual scores and an overall 0–100.
  */
 
@@ -12,6 +13,7 @@ interface ScoreOpts {
   hasAuthor: boolean;
   titleLen: number;
   layout: ConceptLayout;
+  genre?: string;
 }
 
 function sampleBand(
@@ -34,28 +36,64 @@ function sampleBand(
   return { mean, contrast };
 }
 
+/**
+ * Count distinct hue buckets (out of 12) that are well-represented in the zone.
+ * High count = many colors = likely a real character scene.
+ * Low count (0-3) = monochromatic / gradient / abstract background.
+ */
+function sampleHueVariety(
+  data: Buffer, width: number, height: number,
+  y0frac: number, y1frac: number, step = 5
+): number {
+  const y0 = Math.floor(y0frac * height);
+  const y1 = Math.floor(y1frac * height);
+  const buckets = new Array(12).fill(0);
+  let chromatic = 0;
+  for (let y = y0; y < Math.min(height, y1); y += step) {
+    for (let x = 0; x < width; x += step) {
+      const i = (width * y + x) << 2;
+      const r = data[i] / 255, g = data[i + 1] / 255, b = data[i + 2] / 255;
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      if (max - min < 0.12) continue; // near-achromatic — skip
+      let h = 0;
+      if (max === r) h = ((g - b) / (max - min) + 6) % 6;
+      else if (max === g) h = (b - r) / (max - min) + 2;
+      else h = (r - g) / (max - min) + 4;
+      buckets[Math.floor((h / 6) * 12)]++;
+      chromatic++;
+    }
+  }
+  if (chromatic === 0) return 0;
+  const threshold = chromatic * 0.05; // bucket must hold ≥ 5% of chromatic pixels
+  return buckets.filter((b) => b > threshold).length; // 0–12
+}
+
+/** Image zone by layout — area where background artwork is visible (no solid bands). */
+function imageZone(layout: ConceptLayout): [number, number] {
+  if (layout === "typographyFirst")  return [0.60, 1.00]; // below the 58% solid upper band
+  if (layout === "modernCommercial") return [0.40, 0.84]; // between top and bottom bands
+  return [0.30, 0.70];                                    // fullImage: middle (scrim-free)
+}
+
 export function scoreCoverDetailed(pngBytes: Uint8Array, opts: ScoreOpts): ScoreBreakdown {
   try {
     const png = PNG.sync.read(Buffer.from(pngBytes));
     const { width, height, data } = png;
 
     // ── Title readability (0–25) ─────────────────────────────────────────────
-    // White text on dark background = high score. Check contrast behind title band.
     const titleBand = sampleBand(data, width, height, opts.titleBand[0], opts.titleBand[1]);
-    // darkBand → white title is legible
-    const darkness = Math.max(0, (200 - titleBand.mean) / 200); // 0=white,1=black
+    const darkness = Math.max(0, (200 - titleBand.mean) / 200);
     const titleSharpness = opts.titleLen <= 20 ? 1 : opts.titleLen <= 32 ? 0.8 : 0.6;
     const titleReadability = Math.round(darkness * 20 * titleSharpness + 5);
 
     // ── Subtitle readability (0–20) ──────────────────────────────────────────
     let subtitleReadability = 0;
     if (opts.hasSubtitle) {
-      // subtitle typically just below title band
       const subBand = sampleBand(data, width, height, opts.titleBand[1], Math.min(1, opts.titleBand[1] + 0.15));
       const subDark = Math.max(0, (210 - subBand.mean) / 210);
       subtitleReadability = Math.round(subDark * 15 + 5);
     } else {
-      subtitleReadability = 8; // no subtitle — neutral
+      subtitleReadability = 8;
     }
 
     // ── Author visibility (0–15) ─────────────────────────────────────────────
@@ -69,7 +107,6 @@ export function scoreCoverDetailed(pngBytes: Uint8Array, opts: ScoreOpts): Score
     }
 
     // ── Visual balance (0–20) ────────────────────────────────────────────────
-    // Good cover: visual variety throughout + not too uniform
     const fullImg = sampleBand(data, width, height, 0, 1);
     const topThird = sampleBand(data, width, height, 0, 0.33);
     const midThird = sampleBand(data, width, height, 0.33, 0.66);
@@ -79,10 +116,23 @@ export function scoreCoverDetailed(pngBytes: Uint8Array, opts: ScoreOpts): Score
     const balance = Math.min(1, variance / 100);
     const visualBalance = Math.round(interest * 12 + balance * 8);
 
-    // ── Genre match + commercial potential (layout-based heuristics) ─────────
-    const genreMatch = opts.layout === "typographyFirst" ? 10
-      : opts.layout === "modernCommercial" ? 9 : 8;
+    // ── Genre match (0–10) ───────────────────────────────────────────────────
+    // For colorful genres: hue variety in the image zone detects character presence.
+    // A flat gradient scores 1-3; a cartoon character scene scores 7-10.
+    // For other genres: layout-based heuristic (layout quality proxy).
+    let genreMatch: number;
+    const genre = opts.genre ?? "";
+    if (genre === "kids" || genre === "puzzle" || genre === "coloring") {
+      const [z0, z1] = imageZone(opts.layout);
+      const variety = sampleHueVariety(data, width, height, z0, z1);
+      // 0 hue buckets → 1pt, 5 buckets → 9pt, 6+ → 10pt
+      genreMatch = Math.min(10, Math.max(1, variety * 2 - 1));
+    } else {
+      genreMatch = opts.layout === "typographyFirst" ? 10
+        : opts.layout === "modernCommercial" ? 9 : 8;
+    }
 
+    // ── Commercial potential (0–10) ──────────────────────────────────────────
     const hasContent = opts.hasSubtitle && opts.hasAuthor;
     const commercialPotential = hasContent ? 10 : opts.hasSubtitle || opts.hasAuthor ? 7 : 5;
 
@@ -100,7 +150,6 @@ export function scoreCoverDetailed(pngBytes: Uint8Array, opts: ScoreOpts): Score
       overall,
     };
   } catch {
-    // Can't parse PNG — return conservative defaults
     return {
       titleReadability: 16,
       subtitleReadability: 12,
