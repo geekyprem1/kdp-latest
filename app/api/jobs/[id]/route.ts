@@ -42,7 +42,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   if (action === "retry") {
-    await retryJob(id);
+    const result = await retryJob(id);
+    if (!result.ok) {
+      if (result.error === "insufficient_credits")
+        return NextResponse.json({ error: "Not enough credits to retry.", upgrade: true }, { status: 402 });
+      return NextResponse.json({ error: "This job can't be retried right now." }, { status: 409 });
+    }
     return NextResponse.json({ ok: true, status: "queued" });
   }
   if (action === "cancel") {

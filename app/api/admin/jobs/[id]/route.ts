@@ -17,8 +17,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   try {
-    if (action === "retry") await adminRetryJob(admin, id);
-    else if (action === "delete") await adminDeleteJob(admin, id);
+    if (action === "retry") {
+      const result = await adminRetryJob(admin, id);
+      if (!result.ok) {
+        const msg = result.error === "insufficient_credits"
+          ? "User has insufficient credits to retry this job."
+          : "This job can't be retried right now.";
+        return NextResponse.json({ error: msg }, { status: 409 });
+      }
+    } else if (action === "delete") await adminDeleteJob(admin, id);
     else return NextResponse.json({ error: "Unknown action" }, { status: 400 });
     return NextResponse.json({ ok: true });
   } catch (e) {

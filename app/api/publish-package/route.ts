@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { generatePackageData, loadPublishingProfile, profileAuthor, profileCopyright, type PublishContext } from "@/lib/publishing";
+import { reserve, refund, recordUsage } from "@/lib/billing";
+import { assertFeature, billingErrorResponse } from "@/lib/billing/guard";
+import { rateLimit, rateLimitResponse } from "@/lib/util/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,6 +16,8 @@ export async function POST(req: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const rl = rateLimit(`publish:${user.id}`, 10);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
 
   let body: Record<string, unknown>;
   try {
@@ -60,6 +65,19 @@ export async function POST(req: NextRequest) {
     priceOverride: profile.defaultPrice,
   };
 
+  // Launch Kit™ is an AI-backed generation (keywords + categories + titles +
+  // description via OpenRouter), so it is feature-gated and metered like the other
+  // generators. Credits are refunded if generation fails.
+  const cost = 1;
+  try {
+    await assertFeature(user.id, "launch_kit");
+    await reserve(user.id, cost, "publish", bookId);
+  } catch (e) {
+    const r = billingErrorResponse(e);
+    if (r) return r;
+    throw e;
+  }
+
   try {
     const data = await generatePackageData(ctx);
     const { data: pkg, error } = await getSupabaseAdminClient()
@@ -80,6 +98,7 @@ export async function POST(req: NextRequest) {
       .single();
     if (error || !pkg) throw new Error(error?.message ?? "save failed");
 
+    await recordUsage(user.id, "launch_kit", cost, "completed", pkg.id, { topic: ctx.title });
     return NextResponse.json({
       id: pkg.id,
       keywordCount: data.keywords.primary.length + data.keywords.longTail.length,
@@ -87,6 +106,8 @@ export async function POST(req: NextRequest) {
       titleCount: data.alternativeTitles.length,
     });
   } catch (err) {
+    await refund(user.id, cost, bookId);
+    await recordUsage(user.id, "launch_kit", cost, "failed", undefined, { topic: ctx.title });
     console.error("publish package failed:", err);
     return NextResponse.json({ error: "Could not generate package. Please try again." }, { status: 500 });
   }

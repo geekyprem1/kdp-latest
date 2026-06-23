@@ -11,6 +11,7 @@
  */
 
 import { getSupabaseAdminClient } from "../supabase/admin";
+import { reserve, InsufficientCreditsError } from "../billing";
 import { runJob } from "./job-runner";
 
 const running = new Set<string>();
@@ -70,11 +71,43 @@ export async function recoverQueuedJobs(userId: string): Promise<void> {
   }
 }
 
-/** Reset a job to queued and run it again (retry). */
-export async function retryJob(jobId: string): Promise<void> {
-  await getSupabaseAdminClient()
+export interface RetryResult {
+  ok: boolean;
+  error?: "not_found" | "already_active" | "insufficient_credits";
+}
+
+/**
+ * Reset a job to queued and run it again (retry).
+ * A retry is a fresh generation attempt, so it MUST reserve credits again (H1) and
+ * reset the idempotent refund guard so this attempt can refund exactly once on
+ * failure. Without this, repeated failed retries would refund credits with no
+ * matching reserve (credit inflation), and a fail→retry→success could yield a free
+ * book.
+ */
+export async function retryJob(jobId: string): Promise<RetryResult> {
+  const admin = getSupabaseAdminClient();
+  const { data: job } = await admin
     .from("generation_jobs")
-    .update({ status: "queued", progress: 0, current_step: null, error_message: null, updated_at: new Date().toISOString() })
+    .select("id, user_id, status, input")
+    .eq("id", jobId)
+    .single();
+  if (!job) return { ok: false, error: "not_found" };
+  if (job.status === "queued" || job.status === "processing") return { ok: false, error: "already_active" };
+
+  const cost = Number((job.input as Record<string, unknown> | null)?._cost) || 0;
+  if (cost > 0) {
+    try {
+      await reserve(job.user_id as string, cost, "job", jobId);
+    } catch (e) {
+      if (e instanceof InsufficientCreditsError) return { ok: false, error: "insufficient_credits" };
+      throw e;
+    }
+  }
+
+  await admin
+    .from("generation_jobs")
+    .update({ status: "queued", progress: 0, current_step: null, error_message: null, credits_refunded: false, updated_at: new Date().toISOString() })
     .eq("id", jobId);
   startJob(jobId);
+  return { ok: true };
 }

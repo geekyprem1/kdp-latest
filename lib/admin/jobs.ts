@@ -3,7 +3,7 @@
  */
 
 import { getSupabaseAdminClient } from "../supabase/admin";
-import { retryJob } from "../jobs/job-queue";
+import { retryJob, type RetryResult } from "../jobs/job-queue";
 import { logAdminAction } from "./audit";
 import type { AdminIdentity } from "./roles";
 
@@ -47,9 +47,10 @@ export async function listJobs(opts: { status?: string; limit?: number } = {}): 
   });
 }
 
-export async function adminRetryJob(actor: AdminIdentity, jobId: string): Promise<void> {
-  await retryJob(jobId);
-  await logAdminAction(actor, "retry_job", { targetType: "job", targetId: jobId });
+export async function adminRetryJob(actor: AdminIdentity, jobId: string): Promise<RetryResult> {
+  const result = await retryJob(jobId);
+  if (result.ok) await logAdminAction(actor, "retry_job", { targetType: "job", targetId: jobId });
+  return result;
 }
 
 export async function adminDeleteJob(actor: AdminIdentity, jobId: string): Promise<void> {

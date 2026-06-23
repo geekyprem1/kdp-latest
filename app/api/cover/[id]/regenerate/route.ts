@@ -3,6 +3,9 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { putBytes, getBookSignedUrl } from "@/lib/storage";
 import { buildOneConcept, type CoverGenre, type ConceptLayout } from "@/lib/cover";
+import { reserve, refund, recordUsage } from "@/lib/billing";
+import { billingErrorResponse } from "@/lib/billing/guard";
+import { rateLimit, rateLimitResponse } from "@/lib/util/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +20,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const rl = rateLimit(`cover-regen:${user.id}`, 10);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
 
   let index = 0;
   try {
@@ -56,6 +61,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     model: (cover.model as string) ?? "template",
   };
 
+  // Regenerating a concept runs a fresh FLUX (Replicate) image + render, so it is
+  // metered like a new cover. Credits are refunded if it fails.
+  const cost = 1;
+  try {
+    await reserve(user.id, cost, "cover_regen", id);
+  } catch (e) {
+    const r = billingErrorResponse(e);
+    if (r) return r;
+    throw e;
+  }
+
   try {
     const seed = Date.now() % 1_000_000;
     const built = await buildOneConcept(input, brief, layout, seed, index);
@@ -66,8 +82,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     await getSupabaseAdminClient().from("covers").update({ concepts }).eq("id", id);
 
     const url = await getBookSignedUrl(key, 600);
+    await recordUsage(user.id, "cover", cost, "completed", id, { topic: input.title });
     return NextResponse.json({ index, url, score: built.concept.score, layout, breakdown: built.concept.breakdown ?? null, bg_source: built.concept.bg_source ?? null });
   } catch (err) {
+    await refund(user.id, cost, id);
+    await recordUsage(user.id, "cover", cost, "failed", undefined, { topic: input.title });
     console.error("regenerate failed:", err);
     return NextResponse.json({ error: "Regenerate failed. Please try again." }, { status: 500 });
   }

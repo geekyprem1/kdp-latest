@@ -71,8 +71,19 @@ export async function runJob(jobId: string): Promise<void> {
   } catch (err) {
     await markFailed(jobId, (err as Error).message);
     if (cost > 0) {
-      await refund(j.user_id, cost);
-      await recordUsage(j.user_id, j.job_type, cost, "failed", undefined, { topic });
+      // Idempotent refund: flip the guard false→true atomically; only the caller
+      // that wins the flip issues the refund. Prevents duplicate refunds across
+      // retries / double-execution (H1). The flag is reset to false on each retry.
+      const { data: flipped } = await getSupabaseAdminClient()
+        .from("generation_jobs")
+        .update({ credits_refunded: true })
+        .eq("id", jobId)
+        .eq("credits_refunded", false)
+        .select("id");
+      if ((flipped?.length ?? 0) > 0) {
+        await refund(j.user_id, cost);
+        await recordUsage(j.user_id, j.job_type, cost, "failed", undefined, { topic });
+      }
     }
   }
 }
