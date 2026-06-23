@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isStorageConfigured } from "@/lib/storage";
 import { enqueue } from "@/lib/jobs/job-queue";
+import { costFor, reserve } from "@/lib/billing";
+import { assertFeature, billingErrorResponse } from "@/lib/billing/guard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,6 +38,21 @@ export async function POST(req: NextRequest) {
     opportunity: body.opportunity && typeof body.opportunity === "object" ? body.opportunity : undefined,
   };
 
-  const jobId = await enqueue(user.id, { jobType: "ebook", bookType: "ebook", title: userTitle || topic, input });
-  return NextResponse.json({ jobId });
+  const cost = costFor("ebook", { chapterCount: Number(body.chapterCount) || undefined });
+  try {
+    await assertFeature(user.id, "ebook");
+    await reserve(user.id, cost, "job");
+  } catch (e) {
+    const r = billingErrorResponse(e);
+    if (r) return r;
+    throw e;
+  }
+
+  const jobId = await enqueue(user.id, {
+    jobType: "ebook",
+    bookType: "ebook",
+    title: userTitle || topic,
+    input: { ...input, _cost: cost, _action: "ebook" },
+  });
+  return NextResponse.json({ jobId, cost });
 }

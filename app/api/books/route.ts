@@ -3,6 +3,8 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isStorageConfigured } from "@/lib/storage";
 import { type PipelineBookType } from "@/lib/books/pipeline";
 import { enqueue } from "@/lib/jobs/job-queue";
+import { costFor, reserve, type Feature } from "@/lib/billing";
+import { assertFeature, billingErrorResponse } from "@/lib/billing/guard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,6 +54,21 @@ export async function POST(req: NextRequest) {
     opportunity: body.opportunity && typeof body.opportunity === "object" ? body.opportunity : undefined,
   };
 
-  const jobId = await enqueue(user.id, { jobType: bookType, bookType, title: displayTitle, input });
-  return NextResponse.json({ jobId });
+  const cost = costFor(bookType, { count: Number(body.puzzleCount) || undefined });
+  try {
+    await assertFeature(user.id, bookType as Feature);
+    await reserve(user.id, cost, "job");
+  } catch (e) {
+    const r = billingErrorResponse(e);
+    if (r) return r;
+    throw e;
+  }
+
+  const jobId = await enqueue(user.id, {
+    jobType: bookType,
+    bookType,
+    title: displayTitle,
+    input: { ...input, _cost: cost, _action: bookType },
+  });
+  return NextResponse.json({ jobId, cost });
 }

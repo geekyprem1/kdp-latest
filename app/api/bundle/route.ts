@@ -4,6 +4,8 @@ import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isStorageConfigured } from "@/lib/storage";
 import { analyzeTopic } from "@/lib/ai";
 import { generateAndStoreBook, type PipelineBookType } from "@/lib/books/pipeline";
+import { costFor, reserve, refund, recordUsage } from "@/lib/billing";
+import { assertFeature, billingErrorResponse } from "@/lib/billing/guard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,6 +47,18 @@ export async function POST(req: NextRequest) {
   }
   if (selected.length === 0) selected = PUZZLE_TYPES.slice(0, bundleSize);
 
+  // ── billing: Publishing Factory™ feature + summed credit cost ──
+  const costByType = Object.fromEntries(selected.map((t) => [t, costFor(t, { count: DEFAULT_COUNT[t] })])) as Record<PipelineBookType, number>;
+  const totalCost = selected.reduce((s, t) => s + costByType[t], 0);
+  try {
+    await assertFeature(user.id, "factory");
+    await reserve(user.id, totalCost, "bundle");
+  } catch (e) {
+    const r = billingErrorResponse(e);
+    if (r) return r;
+    throw e;
+  }
+
   const admin = getSupabaseAdminClient();
   const { data: bundle, error: bErr } = await admin
     .from("bundles")
@@ -64,9 +78,12 @@ export async function POST(req: NextRequest) {
         { opportunity: analysis, bundleId }
       );
       books.push({ type, id: r.id, title: r.title, status: "completed" });
+      await recordUsage(user.id, type, costByType[type], "completed", r.id, { topic });
     } catch (err) {
       console.error(`bundle book ${type} failed:`, err);
       books.push({ type, status: "failed", error: (err as Error).message });
+      await refund(user.id, costByType[type]); // give back the failed book's credits
+      await recordUsage(user.id, type, costByType[type], "failed", undefined, { topic });
     }
   }
 

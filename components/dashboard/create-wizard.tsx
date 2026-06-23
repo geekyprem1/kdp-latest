@@ -88,6 +88,13 @@ export function CreateWizard() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [upgrade, setUpgrade] = useState(false);
+
+  function handleBillingError(json: { error?: string; upgrade?: boolean; requiredCredits?: number; currentCredits?: number }) {
+    setUpgrade(Boolean(json.upgrade));
+    const credits = json.requiredCredits != null ? ` (need ${json.requiredCredits}, you have ${json.currentCredits})` : "";
+    setError((json.error ?? "Something went wrong") + credits);
+  }
 
   // ── actions ──
   async function analyze() {
@@ -104,7 +111,7 @@ export function CreateWizard() {
         body: JSON.stringify({ topic, audience: audience || undefined, category: category || undefined, country: country || undefined }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Analysis failed");
+      if (!res.ok) { handleBillingError(json); return; }
       setAnalysis(json);
       setStep(2);
     } catch (e) {
@@ -141,7 +148,7 @@ export function CreateWizard() {
         body: JSON.stringify(payload),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? `Failed (${res.status})`);
+      if (!res.ok) { handleBillingError(json); setBusy(false); return; }
       // Generation now runs in the background — go to the Book In Progress page.
       if (json.jobId) {
         router.push(`/dashboard/in-progress/${json.jobId}`);
@@ -380,7 +387,14 @@ export function CreateWizard() {
         </div>
       )}
 
-      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+      {error && (
+        <div className="mt-4 text-sm text-red-600">
+          {error}
+          {upgrade && (
+            <Link href="/dashboard/billing" className="ml-2 font-medium underline">Open Billing →</Link>
+          )}
+        </div>
+      )}
     </Shell>
   );
 }

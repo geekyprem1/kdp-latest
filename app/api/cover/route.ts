@@ -3,6 +3,8 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { putBytes, getBookSignedUrl, isStorageConfigured } from "@/lib/storage";
 import { buildCovers, COVER_GENRES, type CoverGenre } from "@/lib/cover";
+import { reserve, refund, recordUsage } from "@/lib/billing";
+import { assertFeature, billingErrorResponse } from "@/lib/billing/guard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,6 +43,16 @@ export async function POST(req: NextRequest) {
     trim,
   };
 
+  const cost = 1; // Cover Studio
+  try {
+    await assertFeature(user.id, "cover");
+    await reserve(user.id, cost, "cover");
+  } catch (e) {
+    const r = billingErrorResponse(e);
+    if (r) return r;
+    throw e;
+  }
+
   const admin = getSupabaseAdminClient();
   try {
     const { brief, concepts } = await buildCovers(input);
@@ -78,6 +90,7 @@ export async function POST(req: NextRequest) {
     }
     await admin.from("covers").update({ variation_keys: keys, concepts: conceptMeta }).eq("id", coverId);
 
+    await recordUsage(user.id, "cover", cost, "completed", coverId, { topic: title });
     const urls = await Promise.all(keys.map((k) => getBookSignedUrl(k, 600)));
     return NextResponse.json({
       id: coverId,
@@ -85,6 +98,8 @@ export async function POST(req: NextRequest) {
       variations: keys.map((_, i) => ({ index: i, url: urls[i], score: conceptMeta[i].score, layout: conceptMeta[i].layout })),
     });
   } catch (err) {
+    await refund(user.id, cost);
+    await recordUsage(user.id, "cover", cost, "failed", undefined, { topic: title });
     console.error("cover generation failed:", err);
     return NextResponse.json({ error: "Cover generation failed. Please try again." }, { status: 500 });
   }

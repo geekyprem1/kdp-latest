@@ -25,6 +25,7 @@ const GENERATORS = [
 const LIBRARY = [
   { href: "/dashboard/books", label: "Publishing Library" },
   { href: "/dashboard/downloads", label: "Asset Vault" },
+  { href: "/dashboard/billing", label: "Billing" },
   { href: "/dashboard/settings", label: "Settings" },
 ];
 

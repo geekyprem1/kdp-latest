@@ -73,6 +73,24 @@ partial-success tolerant. Bundles tracked in `bundles` + `books.bundle_id`
 bundles share one tested path. Recommended composition + publishing order are
 data-driven from per-type fit. Ebook stays separate (its own pipeline).
 
+## ADR-024 — KDF Mafia monetization: provider-agnostic billing
+**Context:** Launch-ready SaaS needs credits, plans, subscriptions, usage, and
+refunds — without coupling to any payment processor.
+**Decision:** `lib/billing/` with a strict provider boundary
+(`providers/` — `PaymentProvider` interface + `BaseProvider` + stubs for JVZoo /
+WarriorPlus / Stripe / Dodo / LemonSqueezy; registry `getProvider`). Credits,
+plans, subscriptions, usage, and refunds depend ONLY on that interface. Balance
+lives on `subscriptions.credits_remaining`; `credit_transactions` is the ledger;
+`usage_events` + `billing_audit_log` track usage/audit (migration `0013`).
+Dynamic usage-based costs (`cost.ts`); feature gating by plan tier (`plans.ts`).
+Generation flow: gate feature → compute cost → **reserve** (deduct) at enqueue →
+**consume** (usage event) on success / **refund** on failure (in the job runner;
+sync routes reserve+consume/refund inline). Routes map `InsufficientCreditsError`
+→ 402 and `FeatureLockedError` → 403 with upgrade hints. Plan activation is
+simulated via the stub provider until real checkout is wired.
+**Consequences:** Swapping/adding a processor changes only `providers/`. No live
+payments yet; admin actions (grant/remove/refund/changePlan) are backend functions.
+
 ## ADR-023 — Premium Cover Generator: genre layouts, concepts, scoring
 **Context:** The cover module worked but wasn't a differentiator.
 **Decision:** Make it genre-driven (Business / Self Help / Puzzle / Kids /

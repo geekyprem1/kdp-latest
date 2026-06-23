@@ -8,6 +8,7 @@ import { getSupabaseAdminClient } from "../supabase/admin";
 import { generateAndStoreBook, type PipelineBookType } from "../books/pipeline";
 import { generateAndStoreEbook } from "../books/ebook-pipeline";
 import { claimJob, markCompleted, markFailed, progressUpdater } from "./job-progress";
+import { refund, recordUsage } from "../billing";
 
 interface JobRow {
   id: string;
@@ -30,6 +31,8 @@ export async function runJob(jobId: string): Promise<void> {
   if (!(await claimJob(jobId))) return;
   const onProgress = progressUpdater(jobId);
   const input = (j.input ?? {}) as Record<string, unknown>;
+  const cost = Number(input._cost) || 0;
+  const topic = typeof input.theme === "string" ? input.theme : undefined;
 
   try {
     let bookId: string;
@@ -64,7 +67,12 @@ export async function runJob(jobId: string): Promise<void> {
       bookId = r.id;
     }
     await markCompleted(jobId, bookId);
+    await recordUsage(j.user_id, j.job_type, cost, "completed", bookId, { topic });
   } catch (err) {
     await markFailed(jobId, (err as Error).message);
+    if (cost > 0) {
+      await refund(j.user_id, cost);
+      await recordUsage(j.user_id, j.job_type, cost, "failed", undefined, { topic });
+    }
   }
 }
