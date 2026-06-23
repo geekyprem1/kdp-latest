@@ -198,6 +198,9 @@ See [EBOOK_BLUEPRINT.md](EBOOK_BLUEPRINT.md). Re-sequenced to differentiate from
   also now used by `/api/books`) generates each via the existing generators;
   bundles (`bundles` + `books.bundle_id`, migration `0008`); ZIP + individual
   export; data-driven recommended publishing order. No duplicate generator code.
+- **Premium Cover Generator** ✅ COMPLETE — genre-aware (6 genres) layouts, 3
+  distinct scored concepts, AI brief + FLUX background, per-concept regenerate,
+  cover history, use-for-book, PNG + KDP cover PDF (`covers` migration `0012`).
 - **Cover Generator** ✅ COMPLETE (standalone) — `lib/cover/`: AI brief
   (OpenRouter) + FLUX background + crisp typeset overlay → 3 variations; smart
   per-type templates; library (`covers`, migration `0007`); Download PNG / Use

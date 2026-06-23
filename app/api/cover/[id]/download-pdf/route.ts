@@ -1,0 +1,51 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getBytes } from "@/lib/storage";
+import { renderPdf } from "@/lib/pdf/render";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const maxDuration = 60;
+
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 40) || "cover";
+const BLEED = 0.125;
+
+function parseTrim(trim: string): { w: number; h: number } {
+  const [w, h] = (trim || "6x9").split("x").map((n) => parseFloat(n));
+  return { w: Number.isFinite(w) ? w : 6, h: Number.isFinite(h) ? h : 9 };
+}
+
+/** Front-cover, KDP-ready PDF: the concept image full-bleed at the chosen trim. */
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const v = Number(req.nextUrl.searchParams.get("v") ?? "0");
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+
+  const { data: cover } = await supabase.from("covers").select("title, trim, variation_keys").eq("id", id).single();
+  if (!cover) return NextResponse.json({ error: "Cover not found" }, { status: 404 });
+  const keys = (cover.variation_keys as string[]) ?? [];
+  const key = keys[Number.isInteger(v) ? v : 0];
+  if (!key) return NextResponse.json({ error: "Concept not found" }, { status: 404 });
+
+  const { w, h } = parseTrim((cover.trim as string) ?? "6x9");
+  const widthIn = w + 2 * BLEED;
+  const heightIn = h + 2 * BLEED;
+  const dataUri = `data:image/png;base64,${Buffer.from(await getBytes(key)).toString("base64")}`;
+  const html = `<!doctype html><html><head><style>
+    @page{size:${widthIn}in ${heightIn}in;margin:0}
+    html,body{margin:0;padding:0}
+    img{display:block;width:${widthIn}in;height:${heightIn}in;object-fit:cover}
+  </style></head><body><img src="${dataUri}"/></body></html>`;
+
+  const pdf = await renderPdf(html, { widthIn, heightIn });
+  return new NextResponse(Buffer.from(pdf), {
+    headers: {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${slug(cover.title as string)}-cover.pdf"`,
+    },
+  });
+}

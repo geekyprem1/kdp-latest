@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { putBytes, getBookSignedUrl, isStorageConfigured } from "@/lib/storage";
-import { buildCovers, COVER_BOOK_TYPES, type CoverBookType } from "@/lib/cover";
+import { buildCovers, COVER_GENRES, type CoverGenre } from "@/lib/cover";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,24 +27,23 @@ export async function POST(req: NextRequest) {
 
   const title = str(body.title);
   if (!title) return NextResponse.json({ error: "Book title is required" }, { status: 400 });
-  const bookType: CoverBookType = COVER_BOOK_TYPES.includes(body.bookType as CoverBookType)
-    ? (body.bookType as CoverBookType)
-    : "ebook";
+  const genre: CoverGenre = COVER_GENRES.includes(body.genre as CoverGenre) ? (body.genre as CoverGenre) : "business";
+  const trim = str(body.trim) || "6x9";
 
   const input = {
     title,
     subtitle: str(body.subtitle) || undefined,
     author: str(body.author) || undefined,
-    bookType,
-    genre: str(body.genre) || undefined,
+    genre,
     mood: str(body.mood) || undefined,
     artStyle: str(body.artStyle) || undefined,
     audience: str(body.audience) || undefined,
+    trim,
   };
 
   const admin = getSupabaseAdminClient();
   try {
-    const { brief, variations } = await buildCovers(input);
+    const { brief, concepts } = await buildCovers(input);
 
     const { data: inserted, error: insErr } = await admin
       .from("covers")
@@ -53,8 +52,9 @@ export async function POST(req: NextRequest) {
         title,
         subtitle: input.subtitle ?? null,
         author: input.author ?? null,
-        book_type: bookType,
-        genre: input.genre ?? null,
+        book_type: genre,
+        genre,
+        trim,
         mood: input.mood ?? null,
         art_style: input.artStyle ?? null,
         audience: input.audience ?? null,
@@ -69,18 +69,20 @@ export async function POST(req: NextRequest) {
     const coverId = inserted.id as string;
 
     const keys: string[] = [];
-    for (let i = 0; i < variations.length; i++) {
+    const conceptMeta: Array<{ layout: string; seed: number; score: number }> = [];
+    for (let i = 0; i < concepts.length; i++) {
       const key = `covers/${user.id}/${coverId}/${i}.png`;
-      await putBytes(key, variations[i], "image/png");
+      await putBytes(key, concepts[i].bytes, "image/png");
       keys.push(key);
+      conceptMeta.push(concepts[i].concept);
     }
-    await admin.from("covers").update({ variation_keys: keys }).eq("id", coverId);
+    await admin.from("covers").update({ variation_keys: keys, concepts: conceptMeta }).eq("id", coverId);
 
     const urls = await Promise.all(keys.map((k) => getBookSignedUrl(k, 600)));
     return NextResponse.json({
       id: coverId,
       brief: { layout: brief.layout, typography: brief.typography, model: brief.model },
-      variations: keys.map((k, i) => ({ index: i, url: urls[i] })),
+      variations: keys.map((_, i) => ({ index: i, url: urls[i], score: conceptMeta[i].score, layout: conceptMeta[i].layout })),
     });
   } catch (err) {
     console.error("cover generation failed:", err);

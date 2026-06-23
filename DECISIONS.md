@@ -73,6 +73,20 @@ partial-success tolerant. Bundles tracked in `bundles` + `books.bundle_id`
 bundles share one tested path. Recommended composition + publishing order are
 data-driven from per-type fit. Ebook stays separate (its own pipeline).
 
+## ADR-023 — Premium Cover Generator: genre layouts, concepts, scoring
+**Context:** The cover module worked but wasn't a differentiator.
+**Decision:** Make it genre-driven (Business / Self Help / Puzzle / Kids /
+Coloring / Fiction) — each genre sets typography/palette/scrim. Generate **3
+distinct concepts** = 3 layouts (Centered / Top Banner / Lower Third), each with
+its own FLUX (or gradient) background + crisp typeset text. Add a heuristic
+**cover score** (pngjs: title-area contrast + visual interest + completeness).
+Per-concept **regenerate** (new seed, same layout, re-scored). Store concept
+metadata (layout/seed/score) + genre + trim on `covers` (migration `0012`).
+Add a **KDP-ready cover PDF** (front cover, full-bleed at the chosen trim) next to
+PNG. History = the covers table; "use for book" unchanged.
+**Consequences:** Standalone, reuses OpenRouter + FLUX + storage; generators
+untouched. Old cover rows render with safe fallbacks (no genre/concepts).
+
 ## ADR-018 — Cover Generator: FLUX background + crisp typeset overlay
 **Context:** Need professional KDP covers for all book types. AI image models
 render garbled text, so titles can't come from the image itself.

@@ -19,7 +19,7 @@ AI-powered Amazon KDP book creation platform.
 | Coloring Book generator | ✅ | `lib/generators/coloring/` — Replicate FLUX line art, image validation, full-bleed (`npm run test:coloring`; samples need `REPLICATE_API_TOKEN`) |
 | Ebook Creator | ✅ | `lib/generators/ebook/` — outline → chapters (voice-locked) → rewrite/expand editor → typographic cover → PDF/EPUB/DOCX exports |
 | Opportunity Engine + Create wizard | ✅ | `lib/opportunity/` + 4-step wizard with per-type recommendation badges |
-| Cover Generator | ✅ | `lib/cover/` — AI brief (OpenRouter) + FLUX background + typeset overlay → 3 variations, library, use-for-book |
+| Cover Generator (premium) | ✅ | `lib/cover/` — 6 genre-aware layouts, 3 distinct scored concepts, AI brief + FLUX background, per-concept regenerate, history, use-for-book, PNG + KDP cover PDF |
 | Bundle Generator | ✅ | one topic → multi-book bundle; reuses the shared book pipeline (`lib/books/pipeline.ts`) + Opportunity Engine; ZIP export |
 | KDP Publish Package | ✅ | `lib/publishing/` — per book: metadata.json, keywords, description, categories, alt titles, checklist → ZIP (interior + cover + 6 files) |
 | Author & Publishing Profile | ✅ | `/dashboard/settings` — author/pen/publisher/language/trim/price/AI-disclosure/copyright inherited by every book + publish package |

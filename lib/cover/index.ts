@@ -1,3 +1,5 @@
 export * from "./types";
-export { buildCovers } from "./generate";
-export { categoryOf } from "./templates";
+export { buildCovers, buildOneConcept } from "./generate";
+export { generateCoverBrief } from "./prompt";
+export { coverHtml, titleBandFor, type CoverBg } from "./templates";
+export { scoreCover } from "./score";

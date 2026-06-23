@@ -1,48 +1,45 @@
 /**
- * AI cover brief builder (OpenRouter: Gemini 2.5 Flash → DeepSeek). Produces a
- * FLUX background-art prompt plus human-readable layout & typography suggestions.
- * Smart per-book-type guidance is baked in. Falls back to a template brief.
+ * AI cover brief builder (OpenRouter: Gemini → DeepSeek). Genre-aware background
+ * art prompt + layout/typography suggestions. Falls back to a template brief.
  */
 
 import { generateJson } from "../ai/provider";
 import { isAiConfigured } from "../ai/models";
-import { COVER_BOOK_TYPE_LABELS, type CoverBrief, type CoverInput } from "./types";
+import { COVER_GENRE_LABELS, type CoverBrief, type CoverInput } from "./types";
 
-const TYPE_GUIDANCE: Record<string, string> = {
-  ebook: "clean, professional business/non-fiction aesthetic; confident and trustworthy",
-  word_search: "bold, bright, playful activity-book aesthetic with strong shapes",
-  sudoku: "bold, clean puzzle-book aesthetic with a smart, orderly feel",
-  maze: "bold, adventurous activity-book aesthetic with a sense of path/journey",
-  coloring: "light, friendly line-art aesthetic with lots of white space, gentle outlines",
+const GENRE_GUIDANCE: Record<string, string> = {
+  business: "clean, confident, professional; abstract shapes, restrained palette, trustworthy",
+  self_help: "warm, uplifting, calm; soft gradients or nature, hopeful and approachable",
+  puzzle: "bold, bright, playful activity-book energy; strong geometric shapes",
+  kids: "cheerful, colorful, cute and friendly; simple bold illustration",
+  coloring: "light, airy, gentle line-art feel with lots of white space",
+  fiction: "evocative, atmospheric, cinematic; mood and intrigue",
 };
 
 function fallbackBrief(input: CoverInput): CoverBrief {
-  const g = TYPE_GUIDANCE[input.bookType];
   return {
-    imagePrompt: `${input.artStyle || "modern"} book cover background artwork for a ${COVER_BOOK_TYPE_LABELS[input.bookType]} about ${input.genre || input.title}, ${input.mood || "inviting"} mood, ${g}, vertical composition, no text`,
-    layout: "Title in the upper third, subtitle below it, author name at the bottom.",
-    typography: "Large bold display title; smaller clean subtitle; understated author line.",
+    imagePrompt: `${input.artStyle || "modern"} book cover background artwork for a ${COVER_GENRE_LABELS[input.genre]} book about ${input.title}, ${input.mood || "inviting"} mood, ${GENRE_GUIDANCE[input.genre]}, vertical composition, no text`,
+    layout: "Title prominent, subtitle below, author at the bottom.",
+    typography: "Strong display title, clean subtitle, understated author line.",
     model: "template",
   };
 }
 
 export async function generateCoverBrief(input: CoverInput): Promise<CoverBrief> {
   if (!isAiConfigured()) return fallbackBrief(input);
-  const g = TYPE_GUIDANCE[input.bookType];
-
   try {
     const { data, model } = await generateJson<{ imagePrompt: unknown; layout: unknown; typography: unknown }>({
       system: "You are an art director for Amazon KDP book covers. Reply with JSON only.",
-      prompt: `Design direction for a ${COVER_BOOK_TYPE_LABELS[input.bookType]} cover.
-Title: "${input.title}". Subtitle: "${input.subtitle ?? ""}". Genre: ${input.genre ?? "n/a"}.
-Mood: ${input.mood ?? "n/a"}. Art style: ${input.artStyle ?? "n/a"}. Audience: ${input.audience ?? "general"}.
-Style guidance: ${g}.
+      prompt: `Design direction for a ${COVER_GENRE_LABELS[input.genre]} cover.
+Title: "${input.title}". Subtitle: "${input.subtitle ?? ""}". Mood: ${input.mood ?? "n/a"}.
+Art style: ${input.artStyle ?? "n/a"}. Audience: ${input.audience ?? "general"}.
+Genre feel: ${GENRE_GUIDANCE[input.genre]}.
 
 Return JSON:
 {
-  "imagePrompt": string,   // a vivid prompt for the BACKGROUND ARTWORK only — NO text, letters, titles, or words in the image; vertical book-cover composition
-  "layout": string,        // 1 sentence: where title/subtitle/author should sit
-  "typography": string     // 1 sentence: font feel for title/subtitle/author
+  "imagePrompt": string,   // vivid prompt for the BACKGROUND ARTWORK only — NO text/letters/words; vertical book-cover composition
+  "layout": string,        // 1 sentence on title/subtitle/author placement
+  "typography": string     // 1 sentence on font feel
 }`,
       temperature: 0.7,
       maxTokens: 500,

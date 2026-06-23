@@ -1,34 +1,61 @@
-export type CoverBookType = "ebook" | "word_search" | "sudoku" | "maze" | "coloring";
+export type CoverGenre =
+  | "business"
+  | "self_help"
+  | "puzzle"
+  | "kids"
+  | "coloring"
+  | "fiction";
 
-export const COVER_BOOK_TYPES: CoverBookType[] = ["ebook", "word_search", "sudoku", "maze", "coloring"];
+export const COVER_GENRES: CoverGenre[] = ["business", "self_help", "puzzle", "kids", "coloring", "fiction"];
 
-export const COVER_BOOK_TYPE_LABELS: Record<CoverBookType, string> = {
-  ebook: "Ebook",
-  word_search: "Word Search",
-  sudoku: "Sudoku",
-  maze: "Maze",
+export const COVER_GENRE_LABELS: Record<CoverGenre, string> = {
+  business: "Business",
+  self_help: "Self Help",
+  puzzle: "Puzzle Book",
+  kids: "Kids Book",
   coloring: "Coloring Book",
+  fiction: "Fiction",
+};
+
+/** Three distinct layout treatments → three distinct cover concepts. */
+export type ConceptLayout = "centered" | "topBand" | "lowerThird";
+export const CONCEPT_LAYOUTS: ConceptLayout[] = ["centered", "topBand", "lowerThird"];
+export const CONCEPT_LABELS: Record<ConceptLayout, string> = {
+  centered: "Centered Classic",
+  topBand: "Top Banner",
+  lowerThird: "Lower Third",
 };
 
 export interface CoverInput {
   title: string;
   subtitle?: string;
   author?: string;
-  bookType: CoverBookType;
-  genre?: string;
+  genre: CoverGenre;
   mood?: string;
   artStyle?: string;
   audience?: string;
+  trim?: string; // e.g. 6x9
 }
 
 export interface CoverBrief {
-  imagePrompt: string; // background ARTWORK prompt (no text)
-  layout: string; // human-readable layout suggestion
-  typography: string; // human-readable typography suggestion
+  imagePrompt: string;
+  layout: string;
+  typography: string;
   model: string;
+}
+
+export interface CoverConcept {
+  layout: ConceptLayout;
+  seed: number;
+  score: number; // 0-100 estimated quality/legibility
+}
+
+export interface BuiltConcept {
+  concept: CoverConcept;
+  bytes: Uint8Array;
 }
 
 export interface CoverResult {
   brief: CoverBrief;
-  variations: Uint8Array[]; // 3 composited cover PNGs
+  concepts: BuiltConcept[];
 }

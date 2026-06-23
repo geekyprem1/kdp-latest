@@ -12,7 +12,7 @@ export default async function CoverDetailPage({ params }: { params: Promise<{ id
 
   const { data: cover } = await supabase
     .from("covers")
-    .select("id, title, subtitle, book_type, layout, typography, variation_keys")
+    .select("id, title, subtitle, genre, layout, typography, variation_keys, concepts")
     .eq("id", id)
     .single();
   if (!cover) notFound();
@@ -25,8 +25,9 @@ export default async function CoverDetailPage({ params }: { params: Promise<{ id
   const books = (bookData ?? []) as Array<{ id: string; title: string }>;
 
   const keys = (cover.variation_keys as string[] | null) ?? [];
+  const concepts = (cover.concepts as Array<{ layout?: string; score?: number }> | null) ?? [];
   const urls = await Promise.all(keys.map((k) => getBookSignedUrl(k, 600)));
-  const variations = urls.map((url, index) => ({ index, url }));
+  const variations = urls.map((url, index) => ({ url, index, score: concepts[index]?.score, layout: concepts[index]?.layout }));
 
   return (
     <div className="mx-auto max-w-3xl">

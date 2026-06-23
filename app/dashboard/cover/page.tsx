@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { CoverGenerator } from "@/components/dashboard/cover-generator";
-import { COVER_BOOK_TYPE_LABELS, type CoverBookType } from "@/lib/cover";
+import { COVER_GENRE_LABELS, type CoverGenre } from "@/lib/cover";
 
 export const dynamic = "force-dynamic";
 
 interface CoverRow {
   id: string;
   title: string;
-  book_type: string | null;
+  genre: string | null;
   created_at: string;
 }
 
@@ -16,13 +16,13 @@ export default async function CoverPage() {
   const supabase = await createSupabaseServerClient();
   const [{ data: bookData }, { data: coverData }] = await Promise.all([
     supabase.from("books").select("id, title").order("created_at", { ascending: false }).limit(50),
-    supabase.from("covers").select("id, title, book_type, created_at").order("created_at", { ascending: false }).limit(30),
+    supabase.from("covers").select("id, title, genre, created_at").order("created_at", { ascending: false }).limit(30),
   ]);
   const books = (bookData ?? []) as Array<{ id: string; title: string }>;
   const covers = (coverData ?? []) as CoverRow[];
 
   const typeLabel = (t: string | null) =>
-    t ? COVER_BOOK_TYPE_LABELS[t as CoverBookType] ?? t : "—";
+    t ? COVER_GENRE_LABELS[t as CoverGenre] ?? t : "—";
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -46,7 +46,7 @@ export default async function CoverPage() {
               <Link href={`/dashboard/cover/${c.id}`} className="flex items-center justify-between px-4 py-3 hover:bg-neutral-50">
                 <div>
                   <div className="text-sm font-medium">{c.title}</div>
-                  <div className="text-xs text-neutral-500">{typeLabel(c.book_type)} · {new Date(c.created_at).toLocaleDateString()}</div>
+                  <div className="text-xs text-neutral-500">{typeLabel(c.genre)} · {new Date(c.created_at).toLocaleDateString()}</div>
                 </div>
                 <span className="text-sm text-neutral-400">Open →</span>
               </Link>
