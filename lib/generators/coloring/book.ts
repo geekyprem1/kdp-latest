@@ -48,7 +48,7 @@ const DEFAULTS = {
   ageGroup: "kids" as ColoringAgeGroup,
   style: "cute" as ColoringStyle,
   pageCount: 24,
-  author: "KDF Mafia",
+  author: "KDP Mafia",
 };
 
 const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);

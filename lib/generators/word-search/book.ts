@@ -44,7 +44,7 @@ const DEFAULTS = {
   gridSize: 15,
   difficulty: "medium" as Difficulty,
   wordsPerPuzzle: 12,
-  author: "KDF Mafia",
+  author: "KDP Mafia",
 };
 
 export function resolveConfig(opts: WordSearchBookOptions): ResolvedBookConfig {

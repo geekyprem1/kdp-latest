@@ -25,9 +25,25 @@ export default async function BundlePage() {
     <div className="mx-auto max-w-3xl">
       <h1 className="text-2xl font-bold">Publishing Factory™</h1>
       <p className="mt-1 text-sm text-neutral-600">
-        Turn one topic into a complete set of KDP books — we recommend the best mix
-        and produce them all, with a suggested publishing order.
+        Create multiple publishing assets from one niche. Enter a topic, and the
+        Publishing Factory™ recommends the best book mix and produces them all —
+        with a suggested publishing order to maximize your KDP catalogue.
       </p>
+
+      <div className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+        <div className="text-xs font-semibold uppercase tracking-wide text-neutral-400">What gets produced</div>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {["Word Search", "Sudoku", "Maze", "Coloring Book", "Ebook"].map((t) => (
+            <span key={t} className="rounded-full bg-white border border-neutral-200 px-3 py-1 text-xs font-medium text-neutral-700">
+              {t}
+            </span>
+          ))}
+        </div>
+        <p className="mt-2 text-xs text-neutral-500">
+          Opportunity Score powers recommendations — every book type is scored for
+          demand, competition, and monetization before production begins.
+        </p>
+      </div>
 
       <div className="mt-6">
         <BundleGenerator />

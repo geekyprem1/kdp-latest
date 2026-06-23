@@ -21,8 +21,8 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen">
-      <Suspense fallback={<div className="w-56 shrink-0 border-r border-neutral-200" />}>
+    <div className="flex min-h-screen bg-[#FBF7EE]">
+      <Suspense fallback={<div className="w-56 shrink-0 bg-black" />}>
         <DashboardNav email={email} />
       </Suspense>
       <main className="flex-1 p-8">{children}</main>

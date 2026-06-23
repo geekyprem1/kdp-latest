@@ -1,5 +1,5 @@
 /**
- * KDF Mafia plans + feature gating. Plans and features are provider-agnostic —
+ * KDP Mafia plans + feature gating. Plans and features are provider-agnostic —
  * payment processors never appear here.
  */
 
@@ -28,11 +28,11 @@ export interface Plan {
 
 export const PLANS: Record<PlanKey, Plan> = {
   free: { key: "free", name: "Free Trial", price: 0, type: "free", monthlyCredits: 10, tier: 1, blurb: "Try the core generators" },
-  starter: { key: "starter", name: "KDF Mafia Starter", price: 15, type: "one_time", monthlyCredits: 50, tier: 1, blurb: "The fastest way to start a KDP business" },
-  pro: { key: "pro", name: "KDF Mafia Pro", price: 37, type: "one_time", monthlyCredits: 300, tier: 2, blurb: "Coloring books + premium covers" },
-  publisher: { key: "publisher", name: "KDF Mafia Publisher", price: 67, type: "one_time", monthlyCredits: 1000, tier: 3, blurb: "Ebooks + multi-format export" },
-  factory: { key: "factory", name: "KDF Mafia Factory", price: 97, type: "one_time", monthlyCredits: 2500, tier: 4, blurb: "Bulk + bundle production" },
-  agency: { key: "agency", name: "KDF Mafia Agency", price: 197, type: "one_time", monthlyCredits: 100000, tier: 5, blurb: "Unlimited projects, priority queue" },
+  starter: { key: "starter", name: "KDP Mafia Starter", price: 15, type: "one_time", monthlyCredits: 50, tier: 1, blurb: "The fastest way to start a KDP business" },
+  pro: { key: "pro", name: "KDP Mafia Pro", price: 37, type: "one_time", monthlyCredits: 300, tier: 2, blurb: "Coloring books + premium covers" },
+  publisher: { key: "publisher", name: "KDP Mafia Publisher", price: 67, type: "one_time", monthlyCredits: 1000, tier: 3, blurb: "Ebooks + multi-format export" },
+  factory: { key: "factory", name: "KDP Mafia Factory", price: 97, type: "one_time", monthlyCredits: 2500, tier: 4, blurb: "Bulk + bundle production" },
+  agency: { key: "agency", name: "KDP Mafia Agency", price: 197, type: "one_time", monthlyCredits: 100000, tier: 5, blurb: "Unlimited projects, priority queue" },
 };
 
 export const PLAN_ORDER: PlanKey[] = ["free", "starter", "pro", "publisher", "factory", "agency"];

@@ -37,7 +37,7 @@ export interface ResolvedMazeConfig {
 const DEFAULTS = {
   difficulty: "medium" as MazeDifficulty,
   mazeCount: 30,
-  author: "KDF Mafia",
+  author: "KDP Mafia",
 };
 
 const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);

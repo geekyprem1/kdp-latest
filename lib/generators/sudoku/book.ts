@@ -37,7 +37,7 @@ export interface ResolvedSudokuConfig {
 const DEFAULTS = {
   difficulty: "medium" as SudokuDifficulty,
   puzzleCount: 30,
-  author: "KDF Mafia",
+  author: "KDP Mafia",
 };
 
 const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);

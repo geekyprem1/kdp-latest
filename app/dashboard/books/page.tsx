@@ -29,7 +29,7 @@ export default async function MyBooksPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Publishing Library</h1>
+        <h1 className="text-2xl font-bold">Publishing Vault™</h1>
         <Link href="/dashboard/create" className="rounded bg-neutral-900 px-4 py-2 text-sm font-medium text-white">
           Open Publishing Studio
         </Link>
@@ -37,7 +37,7 @@ export default async function MyBooksPage() {
 
       {books.length === 0 ? (
         <div className="mt-8 rounded-xl border border-dashed border-neutral-300 p-8 text-center">
-          <p className="text-sm font-medium text-neutral-700">Your library is empty</p>
+          <p className="text-sm font-medium text-neutral-700">Your vault is empty</p>
           <p className="mt-1 text-sm text-neutral-500">Every book you create lands here, ready to package into a Launch Kit™.</p>
           <Link href="/dashboard/create" className="mt-4 inline-block rounded bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white">Create your first book</Link>
         </div>
@@ -104,12 +104,13 @@ export default async function MyBooksPage() {
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
     completed: "bg-green-100 text-green-800",
-    generating: "bg-amber-100 text-amber-800",
-    failed: "bg-red-100 text-red-800",
+    generating: "bg-blue-100 text-blue-800",
+    failed: "bg-amber-100 text-amber-800",
   };
+  const label = status === "failed" ? "Needs Attention" : status;
   return (
     <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${styles[status] ?? "bg-neutral-100 text-neutral-700"}`}>
-      {status}
+      {label}
     </span>
   );
 }

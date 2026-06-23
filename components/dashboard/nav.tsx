@@ -10,7 +10,7 @@ const MAIN = [
   { href: "/dashboard/create", label: "Publishing Studio" },
   { href: "/dashboard/bundle", label: "Publishing Factory™" },
   { href: "/dashboard/cover", label: "Cover Studio" },
-  { href: "/dashboard/in-progress", label: "Book In Progress" },
+  { href: "/dashboard/in-progress", label: "Production Queue" },
 ];
 
 // Dedicated generator entries → unified Create wizard with the type preselected.
@@ -23,7 +23,7 @@ const GENERATORS = [
 ];
 
 const LIBRARY = [
-  { href: "/dashboard/books", label: "Publishing Library" },
+  { href: "/dashboard/books", label: "Publishing Vault™" },
   { href: "/dashboard/downloads", label: "Asset Vault" },
   { href: "/dashboard/billing", label: "Billing" },
   { href: "/dashboard/settings", label: "Settings" },
@@ -46,7 +46,7 @@ export function DashboardNav({ email }: { email?: string | null }) {
   }
 
   const cls = (active: boolean) =>
-    `rounded px-3 py-2 text-sm ${active ? "bg-neutral-900 text-white" : "text-neutral-700 hover:bg-neutral-100"}`;
+    `rounded px-3 py-2 text-sm ${active ? "bg-white/15 text-white font-medium" : "text-white/60 hover:bg-white/10 hover:text-white"}`;
 
   const mainActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -58,22 +58,20 @@ export function DashboardNav({ email }: { email?: string | null }) {
     pathname === g.href || activeType === g.type;
 
   return (
-    <aside className="flex w-56 shrink-0 flex-col border-r border-neutral-200 p-4">
-      <Link href="/dashboard" className="block px-2">
-        <span className="text-lg font-bold">KDF Mafia</span>
-        <span className="block text-[10px] font-medium uppercase tracking-wide text-neutral-400">
-          AI Publishing Platform
-        </span>
+    <aside className="flex w-56 shrink-0 flex-col bg-black p-4">
+      <Link href="/dashboard" className="block px-2 py-2">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.png" alt="KDP Mafia" className="h-16 w-auto" />
       </Link>
 
-      <nav className="mt-6 flex flex-1 flex-col gap-1">
+      <nav className="mt-4 flex flex-1 flex-col gap-0.5">
         {MAIN.map((l) => (
           <Link key={l.href} href={l.href} className={cls(mainActive(l.href))}>
             {l.label}
           </Link>
         ))}
 
-        <div className="mt-4 px-3 text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
+        <div className="mt-4 px-3 text-[10px] font-semibold uppercase tracking-wide text-white/30">
           Generators
         </div>
         {GENERATORS.map((g) => (
@@ -82,8 +80,8 @@ export function DashboardNav({ email }: { email?: string | null }) {
           </Link>
         ))}
 
-        <div className="mt-4 px-3 text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
-          Library
+        <div className="mt-4 px-3 text-[10px] font-semibold uppercase tracking-wide text-white/30">
+          Vault
         </div>
         {LIBRARY.map((l) => (
           <Link key={l.href} href={l.href} className={cls(pathname.startsWith(l.href))}>
@@ -92,9 +90,9 @@ export function DashboardNav({ email }: { email?: string | null }) {
         ))}
       </nav>
 
-      <div className="mt-4 border-t border-neutral-200 pt-3">
-        {email && <p className="truncate px-3 text-xs text-neutral-500">{email}</p>}
-        <button onClick={signOut} className="mt-2 w-full rounded px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100">
+      <div className="mt-4 border-t border-white/10 pt-3">
+        {email && <p className="truncate px-3 text-xs text-white/30">{email}</p>}
+        <button onClick={signOut} className="mt-2 w-full rounded px-3 py-2 text-left text-sm text-white/50 hover:bg-white/10 hover:text-white">
           Sign out
         </button>
       </div>

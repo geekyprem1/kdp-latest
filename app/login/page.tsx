@@ -50,7 +50,9 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
-      <h1 className="text-2xl font-bold">Sign in to KDF Mafia</h1>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo.png" alt="KDP Mafia" className="h-20 w-auto" />
+      <h1 className="mt-4 text-2xl font-bold">Sign in to KDP Mafia</h1>
       <p className="mt-1 text-sm text-neutral-600">
         The fastest way to build a KDP business.
       </p>

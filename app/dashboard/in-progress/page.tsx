@@ -21,10 +21,14 @@ interface JobRow {
 
 const BADGE: Record<string, string> = {
   completed: "bg-green-100 text-green-800",
-  processing: "bg-amber-100 text-amber-800",
-  queued: "bg-blue-100 text-blue-800",
-  failed: "bg-red-100 text-red-800",
+  processing: "bg-blue-100 text-blue-800",
+  queued: "bg-neutral-100 text-neutral-700",
+  failed: "bg-amber-100 text-amber-800",
   cancelled: "bg-neutral-100 text-neutral-600",
+};
+
+const BADGE_LABEL: Record<string, string> = {
+  failed: "Needs Attention",
 };
 
 export default async function InProgressPage() {
@@ -45,10 +49,10 @@ export default async function InProgressPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <AutoRefresh active={active} />
-      <h1 className="text-2xl font-bold">Book In Progress</h1>
+      <h1 className="text-2xl font-bold">Production Queue</h1>
       <p className="mt-1 text-sm text-neutral-600">
-        Generation runs in the background — you can leave and come back. Completed
-        books appear in My Books automatically.
+        Track books being generated in the background — you can leave and come back.
+        Completed books appear in your Publishing Vault™ automatically.
       </p>
 
       {jobs.length === 0 ? (
@@ -68,7 +72,7 @@ export default async function InProgressPage() {
                     {BOOK_TYPE_LABELS[j.job_type as BookType] ?? j.job_type} · {new Date(j.created_at).toLocaleString()}
                   </div>
                 </div>
-                <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${BADGE[j.status] ?? ""}`}>{j.status}</span>
+                <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${BADGE[j.status] ?? ""}`}>{BADGE_LABEL[j.status] ?? j.status}</span>
               </div>
 
               {(j.status === "queued" || j.status === "processing") && (
