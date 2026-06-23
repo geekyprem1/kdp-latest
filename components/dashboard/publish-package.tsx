@@ -35,10 +35,10 @@ export function PublishPackage({ bookId, initial }: { bookId: string; initial: P
 
   return (
     <div className="rounded-lg border border-neutral-200 p-5">
-      <h2 className="font-semibold">Publishing Package</h2>
+      <h2 className="font-semibold">Launch Kit™</h2>
       <p className="mt-1 text-sm text-neutral-600">
-        A ready-to-publish KDP bundle: metadata.json, keywords, description,
-        categories, alternative titles, a publish checklist, and your PDFs — all in one ZIP.
+        Everything you need to publish, in one ZIP: metadata.json, keywords,
+        description, categories, alternative titles, a publish checklist, and your PDFs.
       </p>
 
       {pkg ? (

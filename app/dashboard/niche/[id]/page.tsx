@@ -24,7 +24,7 @@ export default async function NicheReportPage({
   return (
     <div className="mx-auto max-w-3xl">
       <Link href="/dashboard/niche" className="text-sm text-neutral-500 hover:underline">
-        ← Niche Research
+        ← Market Intelligence™
       </Link>
 
       <div className="mt-2 flex items-start justify-between gap-4">

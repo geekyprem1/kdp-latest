@@ -6,10 +6,10 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const MAIN = [
   { href: "/dashboard", label: "Overview" },
-  { href: "/dashboard/niche", label: "Niche Research" },
-  { href: "/dashboard/create", label: "Create Book" },
-  { href: "/dashboard/bundle", label: "Bundle Generator" },
-  { href: "/dashboard/cover", label: "Cover Generator" },
+  { href: "/dashboard/niche", label: "Market Intelligence™" },
+  { href: "/dashboard/create", label: "Publishing Studio" },
+  { href: "/dashboard/bundle", label: "Publishing Factory™" },
+  { href: "/dashboard/cover", label: "Cover Studio" },
   { href: "/dashboard/in-progress", label: "Book In Progress" },
 ];
 
@@ -23,8 +23,8 @@ const GENERATORS = [
 ];
 
 const LIBRARY = [
-  { href: "/dashboard/books", label: "My Books" },
-  { href: "/dashboard/downloads", label: "Download History" },
+  { href: "/dashboard/books", label: "Publishing Library" },
+  { href: "/dashboard/downloads", label: "Asset Vault" },
   { href: "/dashboard/settings", label: "Settings" },
 ];
 
@@ -58,8 +58,11 @@ export function DashboardNav({ email }: { email?: string | null }) {
 
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r border-neutral-200 p-4">
-      <Link href="/dashboard" className="px-2 text-lg font-bold">
-        KDP Pocket AI
+      <Link href="/dashboard" className="block px-2">
+        <span className="text-lg font-bold">KDP Pocket AI</span>
+        <span className="block text-[10px] font-medium uppercase tracking-wide text-neutral-400">
+          AI Publishing Platform
+        </span>
       </Link>
 
       <nav className="mt-6 flex flex-1 flex-col gap-1">

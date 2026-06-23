@@ -26,7 +26,7 @@ export default async function CoverPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="text-2xl font-bold">Cover Generator</h1>
+      <h1 className="text-2xl font-bold">Cover Studio</h1>
       <p className="mt-1 text-sm text-neutral-600">
         Generate 3 professional KDP cover variations — AI background art with crisp
         typeset title, tuned to your book type.

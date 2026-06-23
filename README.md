@@ -31,6 +31,22 @@ AI-powered Amazon KDP book creation platform.
 | OpenRouter AI | ✅ | Gemini→DeepSeek word lists + metadata (optional; bank/template fallback) |
 | Trigger.dev / Sudoku / Maze / Coloring / Billing / Admin | ⏳ later | — |
 
+## Product terminology
+
+Premium UI names (functionality unchanged; routes in parentheses):
+
+| UI name | Module | Route |
+|---|---|---|
+| Market Intelligence™ | Niche research + Opportunity Engine | `/dashboard/niche` |
+| Publishing Studio | Create-book wizard | `/dashboard/create` |
+| Publishing Factory™ | Bundle generator | `/dashboard/bundle` |
+| Cover Studio | Cover generator | `/dashboard/cover` |
+| Launch Kit™ | KDP publish package | book detail → `/dashboard/books/[id]` |
+| Publishing Library | My Books | `/dashboard/books` |
+| Asset Vault | Download history | `/dashboard/downloads` |
+
+Workflow: **Research → Create → Package → Publish**.
+
 ## Running the SaaS app
 
 ```bash

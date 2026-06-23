@@ -1,23 +1,27 @@
 import Link from "next/link";
 
 const FEATURES: Array<{ title: string; desc: string }> = [
-  { title: "Niche Research", desc: "Find profitable KDP niches with AI-backed demand & competition estimates." },
-  { title: "Opportunity Score", desc: "0–100 score from demand, competition, evergreen & monetization — plus the recommended book type." },
-  { title: "Puzzle Books", desc: "Word Search, Sudoku & Maze — deterministic, print-ready, with answer keys." },
-  { title: "Coloring Books", desc: "AI line-art coloring pages — full-bleed and printable." },
-  { title: "Ebook Creator", desc: "AI outline → editable chapters → a polished non-fiction ebook." },
-  { title: "Multi-format Export", desc: "KDP-ready print PDFs, plus EPUB & DOCX for ebooks." },
+  { title: "Market Intelligence™", desc: "Find profitable KDP niches with demand, competition, evergreen & monetization scoring — before you create." },
+  { title: "Publishing Studio", desc: "Generate Word Search, Sudoku, Maze, Coloring Books & Ebooks in minutes — print-ready and KDP-validated." },
+  { title: "Publishing Factory™", desc: "Turn one niche into a full multi-book bundle, with a recommended publishing order." },
+  { title: "Cover Studio", desc: "Genre-aware cover concepts, scored for impact, with KDP-ready PNG and PDF exports." },
+  { title: "Launch Kit™", desc: "Every book ships with metadata, keywords, categories, description & a publish checklist — in one ZIP." },
+  { title: "Always-on generation", desc: "Start a book and walk away. It finishes in the background and lands in your Publishing Library." },
 ];
 
 export default function Home() {
   return (
     <main className="mx-auto max-w-4xl px-6 py-20">
-      <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-        AI-Powered KDP Publishing Suite
+      <span className="inline-block rounded-full border border-neutral-300 px-3 py-1 text-xs font-medium text-neutral-600">
+        AI Publishing Platform
+      </span>
+      <h1 className="mt-4 text-4xl font-bold tracking-tight sm:text-5xl">
+        Research, create, and launch Amazon KDP books — end to end.
       </h1>
       <p className="mt-4 max-w-2xl text-lg text-neutral-600">
-        Research niches, discover profitable opportunities, and generate Word
-        Search, Sudoku, Maze, Coloring Books, and Ebooks in minutes.
+        KDP Pocket AI turns a single idea into a validated, print-ready book with a
+        complete launch kit. One platform for the whole workflow:
+        <span className="font-medium text-neutral-800"> Research → Create → Package → Publish.</span>
       </p>
 
       <div className="mt-8 flex gap-3">
@@ -31,7 +35,7 @@ export default function Home() {
 
       <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {FEATURES.map((f) => (
-          <div key={f.title} className="rounded-lg border border-neutral-200 p-5">
+          <div key={f.title} className="rounded-xl border border-neutral-200 p-5">
             <h2 className="font-semibold">{f.title}</h2>
             <p className="mt-1.5 text-sm text-neutral-600">{f.desc}</p>
           </div>

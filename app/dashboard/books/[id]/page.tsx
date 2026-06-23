@@ -39,7 +39,7 @@ export default async function BookDetailPage({ params }: { params: Promise<{ id:
 
   return (
     <div className="mx-auto max-w-2xl">
-      <Link href="/dashboard/books" className="text-sm text-neutral-500 hover:underline">← My Books</Link>
+      <Link href="/dashboard/books" className="text-sm text-neutral-500 hover:underline">← Publishing Library</Link>
       <h1 className="mt-1 text-2xl font-bold">{book.title}</h1>
       <p className="text-sm text-neutral-500">
         {typeLabel} · {book.status}

@@ -23,10 +23,10 @@ export default async function BundlePage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="text-2xl font-bold">Bundle Generator</h1>
+      <h1 className="text-2xl font-bold">Publishing Factory™</h1>
       <p className="mt-1 text-sm text-neutral-600">
-        Turn one topic into a set of KDP books — we recommend the best mix, then
-        generate them all using the existing generators.
+        Turn one topic into a complete set of KDP books — we recommend the best mix
+        and produce them all, with a suggested publishing order.
       </p>
 
       <div className="mt-6">

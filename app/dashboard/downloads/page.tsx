@@ -22,7 +22,7 @@ export default async function DownloadsPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="text-2xl font-bold">Download History</h1>
+      <h1 className="text-2xl font-bold">Asset Vault</h1>
 
       {rows.length === 0 ? (
         <p className="mt-8 text-sm text-neutral-500">

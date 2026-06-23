@@ -29,16 +29,18 @@ export default async function MyBooksPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">My Books</h1>
+        <h1 className="text-2xl font-bold">Publishing Library</h1>
         <Link href="/dashboard/create" className="rounded bg-neutral-900 px-4 py-2 text-sm font-medium text-white">
-          + Create Book
+          Open Publishing Studio
         </Link>
       </div>
 
       {books.length === 0 ? (
-        <p className="mt-8 text-sm text-neutral-500">
-          No books yet. <Link href="/dashboard/create" className="underline">Create your first one</Link>.
-        </p>
+        <div className="mt-8 rounded-xl border border-dashed border-neutral-300 p-8 text-center">
+          <p className="text-sm font-medium text-neutral-700">Your library is empty</p>
+          <p className="mt-1 text-sm text-neutral-500">Every book you create lands here, ready to package into a Launch Kit™.</p>
+          <Link href="/dashboard/create" className="mt-4 inline-block rounded bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white">Create your first book</Link>
+        </div>
       ) : (
         <ul className="mt-6 space-y-3">
           {books.map((b) => (
@@ -70,7 +72,7 @@ export default async function MyBooksPage() {
                   <a href={`/api/ebook/${b.id}/export?format=pdf`} className="rounded border border-neutral-900 px-3 py-1.5 text-xs font-medium">PDF</a>
                   <a href={`/api/ebook/${b.id}/export?format=epub`} className="rounded border border-neutral-900 px-3 py-1.5 text-xs font-medium">EPUB</a>
                   <a href={`/api/ebook/${b.id}/export?format=docx`} className="rounded border border-neutral-900 px-3 py-1.5 text-xs font-medium">DOCX</a>
-                  <Link href={`/dashboard/books/${b.id}`} className="rounded border border-neutral-300 px-3 py-1.5 text-xs font-medium">Publish Package</Link>
+                  <Link href={`/dashboard/books/${b.id}`} className="rounded border border-neutral-300 px-3 py-1.5 text-xs font-medium">Launch Kit</Link>
                 </div>
               )}
 
@@ -88,7 +90,7 @@ export default async function MyBooksPage() {
                   >
                     Cover PDF
                   </a>
-                  <Link href={`/dashboard/books/${b.id}`} className="rounded border border-neutral-300 px-3 py-1.5 text-xs font-medium">Publish Package</Link>
+                  <Link href={`/dashboard/books/${b.id}`} className="rounded border border-neutral-300 px-3 py-1.5 text-xs font-medium">Launch Kit</Link>
                 </div>
               )}
             </li>
