@@ -44,7 +44,7 @@ const DEFAULTS = {
   gridSize: 15,
   difficulty: "medium" as Difficulty,
   wordsPerPuzzle: 12,
-  author: "KDP Pocket AI",
+  author: "KDF Mafia",
 };
 
 export function resolveConfig(opts: WordSearchBookOptions): ResolvedBookConfig {

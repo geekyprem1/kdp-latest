@@ -3,6 +3,23 @@
 Audit only — no features added. Findings from a real code review, by severity,
 plus deployment / production / security checklists.
 
+## Remediation status (updated)
+
+| # | Finding | Status |
+|---|---|---|
+| 1 | Public unmetered word-search route + page | ✅ Removed (`app/word-search`, `app/api/word-search`) |
+| — | Unmetered `/api/niche` AI research (found during fix) | ✅ Now gated + 1 credit + rate-limited |
+| 2 | Free self-activation of paid plans | ✅ Gated behind `BILLING_TEST_ACTIVATION=1`; 403 in prod |
+| 5 | Non-atomic credit spend | ✅ Atomic SQL `spend_credits`/`add_credits` (migration `0014`), service-role only |
+| 8 | Security headers + rate limiting | ✅ Headers in `next.config.mjs`; per-user rate limits on all generation routes |
+| 9 | Branding inconsistency | ✅ Renamed to **KDF Mafia** + tagline across UI/metadata |
+| 3 | No real payment processor | ⏳ Deferred (per instruction — don't implement payments yet) |
+| 4 | Serverless vs. long jobs | ⏳ Deployment-time (use long-running host + worker) |
+| 6 | Rotate exposed secrets | ⏳ Ops action before launch |
+| 7 | Replicate not configured | ⏳ Set token in prod, or hide coloring/cover |
+
+---
+
 ## 🔴 Launch blockers (must fix before public launch)
 
 1. **Public, unauthenticated, unmetered generation.**

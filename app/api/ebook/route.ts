@@ -4,6 +4,7 @@ import { isStorageConfigured } from "@/lib/storage";
 import { enqueue } from "@/lib/jobs/job-queue";
 import { costFor, reserve } from "@/lib/billing";
 import { assertFeature, billingErrorResponse } from "@/lib/billing/guard";
+import { rateLimit, rateLimitResponse } from "@/lib/util/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,6 +16,8 @@ export async function POST(req: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const rl = rateLimit(`ebook:${user.id}`, 10);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
   if (!isStorageConfigured()) return NextResponse.json({ error: "Storage is not configured." }, { status: 503 });
 
   let body: Record<string, unknown>;

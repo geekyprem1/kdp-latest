@@ -28,7 +28,7 @@ async function bookAssets(
     const pdf = await buildEbookPdf({
       title: book.title,
       subtitle,
-      author: cfg.author ?? "KDP Pocket AI",
+      author: cfg.author ?? "KDF Mafia",
       chapters: (chapters ?? []).map((c) => ({ idx: c.idx, title: c.title, contentMd: c.content_md })),
     });
     assets.push({ name: "interior.pdf", bytes: pdf });
@@ -67,7 +67,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const md = (pkg.metadata_json ?? {}) as { author?: string };
   const ctx: PublishContext = {
     title: book.title,
-    author: md.author ?? "KDP Pocket AI",
+    author: md.author ?? "KDF Mafia",
     bookType: book.book_type,
     trim: book.trim_size ?? "8.5x11",
   };

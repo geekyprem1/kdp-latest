@@ -1,10 +1,9 @@
-# KDP Pocket AI
+# KDF Mafia
 
-AI-powered Amazon KDP book creation platform.
+**The Fastest Way to Build a KDP Business.**
 
-> **Status: MVP SaaS live for Word Search.** Login → Create a word search book →
-> download KDP-validated interior + cover PDFs. The PDF engine is KDP-previewer
-> validated. Sudoku, Maze, Coloring, Billing, and Admin are not built yet.
+AI-powered Amazon KDP publishing platform: research niches → generate KDP-ready
+books, covers, and launch kits → publish.
 
 ---
 
@@ -118,14 +117,13 @@ Deterministic (seeded), theme-based word lists, no AI image generation. Output i
 ```bash
 # CLI (writes output/word-search-{interior,cover}.pdf, checks determinism)
 npm run ws:generate -- Dinosaurs 20 medium
-
-# Web flow
-npm run dev      # then open http://localhost:3000/word-search
 ```
 
-API: `POST /api/word-search/generate` with
-`{ theme, puzzleCount, gridSize, difficulty, part: "interior"|"cover" }` →
-streams a PDF. (≥11 puzzles needed to clear KDP's 24-page minimum.)
+In the app, generate via the authenticated, credit-metered flow:
+**`/dashboard/create?type=word-search`** (the old public `/word-search` demo and
+its unmetered `/api/word-search/generate` endpoint were removed for launch — all
+generation now requires auth + credits). (≥11 puzzles needed to clear KDP's
+24-page minimum.)
 
 ### Sample books for KDP upload testing
 

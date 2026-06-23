@@ -60,7 +60,7 @@ export function DashboardNav({ email }: { email?: string | null }) {
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r border-neutral-200 p-4">
       <Link href="/dashboard" className="block px-2">
-        <span className="text-lg font-bold">KDP Pocket AI</span>
+        <span className="text-lg font-bold">KDF Mafia</span>
         <span className="block text-[10px] font-medium uppercase tracking-wide text-neutral-400">
           AI Publishing Platform
         </span>

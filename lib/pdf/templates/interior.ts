@@ -114,7 +114,7 @@ export function buildGateInteriorPages(
       <div style="display:flex;flex-direction:column;height:100%;justify-content:center;text-align:center">
         <h1>${meta.title}</h1>
         <h2 style="color:#555">${meta.subtitle}</h2>
-        <p class="muted" style="margin-top:0.5in">KDP Pocket AI &middot; PDF Engine Gate Sample</p>
+        <p class="muted" style="margin-top:0.5in">KDF Mafia &middot; PDF Engine Gate Sample</p>
       </div>`,
   });
 

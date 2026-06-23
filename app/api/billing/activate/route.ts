@@ -6,11 +6,26 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Simulated plan activation. Real checkout is wired through a payment provider
- * later; today it runs the provider's (stub) validatePurchase then assigns the
- * plan + grants its credits. Provider-agnostic by design.
+ * Plan activation.
+ *
+ * SECURITY: this route can grant a paid plan + credits, so it must NEVER trust a
+ * client-supplied plan in production. It is disabled unless BILLING_TEST_ACTIVATION=1
+ * (QA only). Real, paid activation must arrive through a verified payment-provider
+ * webhook that calls changePlan()/grant() server-side — not through this endpoint.
  */
 export async function POST(req: NextRequest) {
+  const testMode = process.env.BILLING_TEST_ACTIVATION === "1";
+  if (!testMode) {
+    return NextResponse.json(
+      {
+        error:
+          "Plan activation requires a verified payment. Live checkout is not enabled yet.",
+        code: "activation_disabled",
+      },
+      { status: 403 }
+    );
+  }
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },

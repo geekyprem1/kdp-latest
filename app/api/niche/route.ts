@@ -3,6 +3,9 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { generateNicheResearch } from "@/lib/ai";
 import { isAiConfigured } from "@/lib/ai";
+import { reserve, refund, recordUsage } from "@/lib/billing";
+import { assertFeature, billingErrorResponse } from "@/lib/billing/guard";
+import { rateLimit, rateLimitResponse } from "@/lib/util/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,6 +17,8 @@ export async function POST(req: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const rl = rateLimit(`niche:${user.id}`, 15);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
 
   if (!isAiConfigured()) {
     return NextResponse.json(
@@ -39,6 +44,16 @@ export async function POST(req: NextRequest) {
     country: typeof body.country === "string" ? body.country.trim() : undefined,
   };
 
+  const cost = 1; // Market Intelligence™
+  try {
+    await assertFeature(user.id, "market_intelligence");
+    await reserve(user.id, cost, "niche");
+  } catch (e) {
+    const r = billingErrorResponse(e);
+    if (r) return r;
+    throw e;
+  }
+
   try {
     const { ideas, model } = await generateNicheResearch(input);
 
@@ -57,8 +72,11 @@ export async function POST(req: NextRequest) {
       .single();
     if (error || !inserted) throw new Error(error?.message ?? "insert failed");
 
+    await recordUsage(user.id, "market_intelligence", cost, "completed", inserted.id, { keyword });
     return NextResponse.json({ id: inserted.id, count: ideas.length });
   } catch (err) {
+    await refund(user.id, cost);
+    await recordUsage(user.id, "market_intelligence", cost, "failed", undefined, { keyword });
     console.error("niche research failed:", err);
     return NextResponse.json(
       { error: "Research failed. Please try again." },

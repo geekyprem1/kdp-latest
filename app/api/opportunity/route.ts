@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { analyzeTopic } from "@/lib/ai";
 import { reserve, refund, recordUsage } from "@/lib/billing";
 import { assertFeature, billingErrorResponse } from "@/lib/billing/guard";
+import { rateLimit, rateLimitResponse } from "@/lib/util/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,6 +15,8 @@ export async function POST(req: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const rl = rateLimit(`opportunity:${user.id}`, 15);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
 
   let body: Record<string, unknown>;
   try {

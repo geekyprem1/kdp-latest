@@ -12,14 +12,17 @@ const FEATURES: Array<{ title: string; desc: string }> = [
 export default function Home() {
   return (
     <main className="mx-auto max-w-4xl px-6 py-20">
-      <span className="inline-block rounded-full border border-neutral-300 px-3 py-1 text-xs font-medium text-neutral-600">
-        AI Publishing Platform
-      </span>
+      <div className="flex items-center gap-2 text-sm font-semibold tracking-tight">
+        <span className="text-lg font-bold">KDF Mafia</span>
+        <span className="inline-block rounded-full border border-neutral-300 px-3 py-1 text-xs font-medium text-neutral-600">
+          AI Publishing Platform
+        </span>
+      </div>
       <h1 className="mt-4 text-4xl font-bold tracking-tight sm:text-5xl">
-        Research, create, and launch Amazon KDP books — end to end.
+        The Fastest Way to Build a KDP Business.
       </h1>
       <p className="mt-4 max-w-2xl text-lg text-neutral-600">
-        KDP Pocket AI turns a single idea into a validated, print-ready book with a
+        KDF Mafia turns a single idea into a validated, print-ready book with a
         complete launch kit. One platform for the whole workflow:
         <span className="font-medium text-neutral-800"> Research → Create → Package → Publish.</span>
       </p>
