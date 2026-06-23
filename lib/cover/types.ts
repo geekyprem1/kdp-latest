@@ -68,6 +68,8 @@ export interface CoverConcept {
   seed: number;
   score: number;           // overall 0-100 for backward compat
   breakdown: ScoreBreakdown;
+  /** "image" = real Replicate generation; "gradient" = CSS fallback. Always present on V2 concepts. */
+  bg_source?: "image" | "gradient";
 }
 
 export interface BuiltConcept {

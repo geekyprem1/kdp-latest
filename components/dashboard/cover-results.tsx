@@ -18,6 +18,7 @@ export interface CoverVariation {
   score?: number;
   layout?: string;
   breakdown?: ScoreBreakdown | null;
+  bg_source?: "image" | "gradient" | null;
 }
 
 export interface BookOption {
@@ -120,7 +121,7 @@ export function CoverResults({
       setVariations((prev) =>
         prev.map((v) =>
           v.index === index
-            ? { ...v, url: `${json.url}#${Date.now()}`, score: json.score, breakdown: json.breakdown ?? v.breakdown }
+            ? { ...v, url: `${json.url}#${Date.now()}`, score: json.score, breakdown: json.breakdown ?? v.breakdown, bg_source: json.bg_source ?? v.bg_source }
             : v
         )
       );
@@ -192,6 +193,12 @@ export function CoverResults({
                 <div>
                   <div className="text-xs font-bold text-neutral-800">{label}</div>
                   {desc && <div className="text-[10px] text-neutral-400 mt-0.5">{desc}</div>}
+                  {v.bg_source === "gradient" && (
+                    <div className="text-[9px] text-amber-600 font-semibold mt-0.5">⚠ Gradient fallback</div>
+                  )}
+                  {v.bg_source === "image" && (
+                    <div className="text-[9px] text-green-600 font-semibold mt-0.5">✓ AI generated</div>
+                  )}
                 </div>
                 {c && (
                   <span

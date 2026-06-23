@@ -2,9 +2,17 @@
  * Cover Generator V2 — each concept gets its own distinct AI brief + image prompt.
  * Safe-zone layouts, genre-aware typography, detailed scoring.
  *
- * Observability: gradient fallback is always logged via console.error.
- * Retry: character-required genres (kids, puzzle) get one automatic retry before
- * accepting a gradient fallback, to avoid silent compliance failures.
+ * Architecture:
+ *   buildCovers() separates FLUX generation (sequential) from rendering (parallel).
+ *   Running 3 concurrent FLUX calls against the same Replicate API key triggers the
+ *   per-key concurrency limit, silently canceling 2 out of 3 predictions and causing
+ *   gradient fallback. Sequential FLUX + parallel render avoids this while keeping
+ *   total latency close to the same (FLUX dominates render time anyway).
+ *
+ * Observability:
+ *   Every concept stores bg_source ("image" | "gradient") so the DB record always
+ *   reveals whether real Replicate art or CSS fallback was used.
+ *   All fallbacks are logged via console.error with the full error message.
  */
 
 import { renderPng } from "../pdf/render";
@@ -21,7 +29,7 @@ import {
   type ConceptLayout,
 } from "./types";
 
-// Per-concept fallback gradients (richer than before)
+// Per-concept CSS fallback gradients used when Replicate is unavailable or fails
 const CONCEPT_GRADIENTS: Record<ConceptLayout, [[string, string], [string, string], [string, string]]> = {
   fullImage:         [["#0f172a","#1e3a5f"],["#7c2d12","#9a3412"],["#064e3b","#065f46"]],
   typographyFirst:   [["#1e1b4b","#312e81"],["#450a0a","#7f1d1d"],["#042f2e","#134e4a"]],
@@ -33,6 +41,12 @@ const CHARACTER_GENRES = new Set(["kids", "puzzle"]);
 
 const dataUri = (b: Uint8Array) => `data:image/png;base64,${Buffer.from(b).toString("base64")}`;
 
+/**
+ * Fetch one FLUX image with one automatic retry for character-required genres.
+ * MUST be called sequentially across concepts — concurrent calls to the same
+ * Replicate API key trigger the per-key concurrency limit and silently cancel
+ * predictions, causing gradient fallback even when the API is working.
+ */
 async function tryFluxWithRetry(
   brief: CoverBrief,
   seed: number,
@@ -41,40 +55,52 @@ async function tryFluxWithRetry(
   gradientIdx: number
 ): Promise<CoverBg> {
   if (!isReplicateConfigured()) {
-    return { kind: "gradient", c1: CONCEPT_GRADIENTS[layout][gradientIdx % 3][0], c2: CONCEPT_GRADIENTS[layout][gradientIdx % 3][1] };
+    console.log(`[cover] Replicate not configured — using gradient (genre=${genre} layout=${layout})`);
+    const [c1, c2] = CONCEPT_GRADIENTS[layout][gradientIdx % 3];
+    return { kind: "gradient", c1, c2 };
   }
+
+  console.log(`[cover] FLUX request: genre=${genre} layout=${layout} seed=${seed}`);
 
   // First attempt
   try {
     const art = await fluxSchnell({ prompt: brief.imagePrompt, seed, aspectRatio: "2:3" });
+    console.log(`[cover] FLUX succeeded: genre=${genre} layout=${layout} seed=${seed} bytes=${art.byteLength}`);
     return { kind: "image", dataUri: dataUri(art) };
-  } catch (err) {
-    // Character-required genres get one retry with a shifted seed before accepting gradient
+  } catch (firstErr) {
+    console.error(`[cover] FLUX failed (attempt 1): genre=${genre} layout=${layout} seed=${seed}`, firstErr);
+
+    // Character-required genres get one automatic retry with a shifted seed
     if (CHARACTER_GENRES.has(genre)) {
+      const retrySeed = seed + 777;
+      console.log(`[cover] FLUX retry: genre=${genre} layout=${layout} seed=${retrySeed}`);
       try {
-        const art = await fluxSchnell({ prompt: brief.imagePrompt, seed: seed + 777, aspectRatio: "2:3" });
-        console.error(`[cover] Replicate first attempt failed (genre=${genre} layout=${layout}), retry succeeded.`);
+        const art = await fluxSchnell({ prompt: brief.imagePrompt, seed: retrySeed, aspectRatio: "2:3" });
+        console.log(`[cover] FLUX retry succeeded: genre=${genre} layout=${layout} seed=${retrySeed} bytes=${art.byteLength}`);
         return { kind: "image", dataUri: dataUri(art) };
       } catch (retryErr) {
-        console.error(`[cover] Replicate retry also failed (genre=${genre} layout=${layout} seed=${seed}):`, retryErr);
+        console.error(`[cover] FLUX retry failed: genre=${genre} layout=${layout} seed=${retrySeed}`, retryErr);
       }
-    } else {
-      console.error(`[cover] Replicate fallback (genre=${genre} layout=${layout} seed=${seed}):`, err);
     }
   }
 
+  console.error(`[cover] Using gradient fallback: genre=${genre} layout=${layout} seed=${seed}`);
   const [c1, c2] = CONCEPT_GRADIENTS[layout][gradientIdx % 3];
   return { kind: "gradient", c1, c2 };
 }
 
-export async function buildOneConcept(
+/**
+ * Render and score one concept given a pre-built background.
+ * bg_source tracks whether a real Replicate image or gradient fallback was used.
+ */
+async function renderConcept(
   input: CoverInput,
   brief: CoverBrief,
   layout: ConceptLayout,
   seed: number,
-  gradientIdx = 0
+  bg: CoverBg
 ): Promise<BuiltConcept> {
-  const bg = await tryFluxWithRetry(brief, seed, input.genre, layout, gradientIdx);
+  console.log(`[cover] Render: layout=${layout} bg=${bg.kind}`);
 
   const html = coverHtml({
     genre: input.genre,
@@ -96,25 +122,65 @@ export async function buildOneConcept(
     genre: input.genre,
   });
 
+  console.log(`[cover] Score: layout=${layout} bg=${bg.kind} overall=${breakdown.overall} genreMatch=${breakdown.genreMatch}`);
+
   return {
-    concept: { layout, seed, score: breakdown.overall, breakdown },
+    concept: {
+      layout,
+      seed,
+      score: breakdown.overall,
+      breakdown,
+      bg_source: bg.kind,
+    },
     bytes,
   };
 }
 
+/**
+ * Build one concept end-to-end (FLUX + render + score).
+ * Used by the regenerate route where sequential ordering is not required.
+ * Optionally accepts a pre-built bg to skip FLUX (used internally by buildCovers).
+ */
+export async function buildOneConcept(
+  input: CoverInput,
+  brief: CoverBrief,
+  layout: ConceptLayout,
+  seed: number,
+  gradientIdx = 0,
+  prebuiltBg?: CoverBg
+): Promise<BuiltConcept> {
+  const bg = prebuiltBg ?? await tryFluxWithRetry(brief, seed, input.genre, layout, gradientIdx);
+  return renderConcept(input, brief, layout, seed, bg);
+}
+
+/**
+ * Build all 3 concepts.
+ * FLUX calls run sequentially to avoid Replicate per-key concurrency limits.
+ * Puppeteer renders run in parallel since they are CPU-bound with no external API calls.
+ */
 export async function buildCovers(input: CoverInput): Promise<CoverResult> {
-  // Generate a DISTINCT AI brief for each concept in parallel
+  // 1. AI briefs — parallel (OpenRouter, not Replicate, no concurrency conflict)
   const briefs = await Promise.all(
     CONCEPT_LAYOUTS.map((layout) => generateConceptBrief(input, layout))
   );
 
+  // 2. FLUX image generation — SEQUENTIAL to avoid Replicate concurrency cancellations
+  const bgs: CoverBg[] = [];
+  for (let i = 0; i < CONCEPT_LAYOUTS.length; i++) {
+    const layout = CONCEPT_LAYOUTS[i];
+    const seed = 100 * (i + 1) + 42;
+    const bg = await tryFluxWithRetry(briefs[i], seed, input.genre, layout, i);
+    bgs.push(bg);
+  }
+
+  // 3. Render + score — parallel (no external API calls, CPU-bound only)
   const concepts = await Promise.all(
     CONCEPT_LAYOUTS.map((layout, i) =>
-      buildOneConcept(input, briefs[i], layout, 100 * (i + 1) + 42, i)
+      renderConcept(input, briefs[i], layout, 100 * (i + 1) + 42, bgs[i])
     )
   );
 
-  // Return the fullImage brief as the "cover brief" for the DB record
+  // Return fullImage brief as the cover record's primary brief
   const primaryBrief = await generateCoverBrief(input);
   return { brief: { ...primaryBrief, imagePrompt: briefs[0].imagePrompt }, concepts };
 }

@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-interface Concept { layout: ConceptLayout; seed: number; score: number; breakdown?: unknown }
+interface Concept { layout: ConceptLayout; seed: number; score: number; breakdown?: unknown; bg_source?: string }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     await getSupabaseAdminClient().from("covers").update({ concepts }).eq("id", id);
 
     const url = await getBookSignedUrl(key, 600);
-    return NextResponse.json({ index, url, score: built.concept.score, layout, breakdown: built.concept.breakdown ?? null });
+    return NextResponse.json({ index, url, score: built.concept.score, layout, breakdown: built.concept.breakdown ?? null, bg_source: built.concept.bg_source ?? null });
   } catch (err) {
     console.error("regenerate failed:", err);
     return NextResponse.json({ error: "Regenerate failed. Please try again." }, { status: 500 });

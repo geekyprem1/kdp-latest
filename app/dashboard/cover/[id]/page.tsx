@@ -25,13 +25,14 @@ export default async function CoverDetailPage({ params }: { params: Promise<{ id
   const books = (bookData ?? []) as Array<{ id: string; title: string }>;
 
   const keys = (cover.variation_keys as string[] | null) ?? [];
-  const concepts = (cover.concepts as Array<{ layout?: string; score?: number; breakdown?: unknown }> | null) ?? [];
+  const concepts = (cover.concepts as Array<{ layout?: string; score?: number; breakdown?: unknown; bg_source?: string }> | null) ?? [];
   const urls = await Promise.all(keys.map((k) => getBookSignedUrl(k, 600)));
   const variations = urls.map((url, index) => ({
     url, index,
     score: concepts[index]?.score,
     layout: concepts[index]?.layout,
     breakdown: (concepts[index]?.breakdown ?? null) as import("@/components/dashboard/cover-results").ScoreBreakdown | null,
+    bg_source: (concepts[index]?.bg_source ?? null) as "image" | "gradient" | null,
   }));
 
   return (
