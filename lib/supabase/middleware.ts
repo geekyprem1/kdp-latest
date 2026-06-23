@@ -33,11 +33,14 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Gate dashboard routes.
-  if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
+  // Gate dashboard + admin routes behind auth. The admin role itself is checked
+  // server-side in app/admin/layout.tsx (which also applies the env-allowlist
+  // bootstrap); here we only ensure the visitor is logged in.
+  const path = request.nextUrl.pathname;
+  if (!user && (path.startsWith("/dashboard") || path.startsWith("/admin"))) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
-    loginUrl.searchParams.set("next", request.nextUrl.pathname);
+    loginUrl.searchParams.set("next", path);
     return NextResponse.redirect(loginUrl);
   }
 

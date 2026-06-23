@@ -26,10 +26,11 @@ const LIBRARY = [
   { href: "/dashboard/books", label: "Publishing Vault™" },
   { href: "/dashboard/downloads", label: "Asset Vault" },
   { href: "/dashboard/billing", label: "Billing" },
+  { href: "/dashboard/support", label: "Support" },
   { href: "/dashboard/settings", label: "Settings" },
 ];
 
-export function DashboardNav({ email }: { email?: string | null }) {
+export function DashboardNav({ email, isAdmin = false }: { email?: string | null; isAdmin?: boolean }) {
   const pathname = usePathname();
   const params = useSearchParams();
   const router = useRouter();
@@ -91,6 +92,14 @@ export function DashboardNav({ email }: { email?: string | null }) {
       </nav>
 
       <div className="mt-4 border-t border-white/10 pt-3">
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className="mb-2 block rounded px-3 py-2 text-sm font-semibold text-[#C9A84C] hover:bg-[#C9A84C]/10"
+          >
+            ⚜ Admin Control
+          </Link>
+        )}
         {email && <p className="truncate px-3 text-xs text-white/30">{email}</p>}
         <button onClick={signOut} className="mt-2 w-full rounded px-3 py-2 text-left text-sm text-white/50 hover:bg-white/10 hover:text-white">
           Sign out
