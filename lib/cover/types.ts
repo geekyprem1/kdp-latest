@@ -17,13 +17,18 @@ export const COVER_GENRE_LABELS: Record<CoverGenre, string> = {
   fiction: "Fiction",
 };
 
-/** Three distinct layout treatments → three distinct cover concepts. */
-export type ConceptLayout = "centered" | "topBand" | "lowerThird";
-export const CONCEPT_LAYOUTS: ConceptLayout[] = ["centered", "topBand", "lowerThird"];
+/**
+ * V2 — three genuinely different cover concepts:
+ *  fullImage   : cinematic full-bleed image, large title, professional hierarchy
+ *  typographyFirst : bestseller title-block dominant, minimal image, thumbnail-readable
+ *  modernCommercial: image + strong design band — modern KDP commercial style
+ */
+export type ConceptLayout = "fullImage" | "typographyFirst" | "modernCommercial";
+export const CONCEPT_LAYOUTS: ConceptLayout[] = ["fullImage", "typographyFirst", "modernCommercial"];
 export const CONCEPT_LABELS: Record<ConceptLayout, string> = {
-  centered: "Centered Classic",
-  topBand: "Top Banner",
-  lowerThird: "Lower Third",
+  fullImage: "Premium Full Image",
+  typographyFirst: "Bestseller Typography",
+  modernCommercial: "Modern Commercial",
 };
 
 export interface CoverInput {
@@ -34,20 +39,35 @@ export interface CoverInput {
   mood?: string;
   artStyle?: string;
   audience?: string;
-  trim?: string; // e.g. 6x9
+  niche?: string;
+  opportunityScore?: number;
+  trim?: string;
 }
 
 export interface CoverBrief {
   imagePrompt: string;
+  accentColor: string;   // hex, pulled from genre palette
   layout: string;
   typography: string;
   model: string;
 }
 
+/** Detailed breakdown returned alongside the overall score. */
+export interface ScoreBreakdown {
+  titleReadability: number;    // 0–25
+  subtitleReadability: number; // 0–20
+  authorVisibility: number;    // 0–15
+  visualBalance: number;       // 0–20
+  genreMatch: number;          // 0–10
+  commercialPotential: number; // 0–10
+  overall: number;             // 0–100
+}
+
 export interface CoverConcept {
   layout: ConceptLayout;
   seed: number;
-  score: number; // 0-100 estimated quality/legibility
+  score: number;           // overall 0-100 for backward compat
+  breakdown: ScoreBreakdown;
 }
 
 export interface BuiltConcept {

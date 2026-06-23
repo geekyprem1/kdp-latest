@@ -25,9 +25,14 @@ export default async function CoverDetailPage({ params }: { params: Promise<{ id
   const books = (bookData ?? []) as Array<{ id: string; title: string }>;
 
   const keys = (cover.variation_keys as string[] | null) ?? [];
-  const concepts = (cover.concepts as Array<{ layout?: string; score?: number }> | null) ?? [];
+  const concepts = (cover.concepts as Array<{ layout?: string; score?: number; breakdown?: unknown }> | null) ?? [];
   const urls = await Promise.all(keys.map((k) => getBookSignedUrl(k, 600)));
-  const variations = urls.map((url, index) => ({ url, index, score: concepts[index]?.score, layout: concepts[index]?.layout }));
+  const variations = urls.map((url, index) => ({
+    url, index,
+    score: concepts[index]?.score,
+    layout: concepts[index]?.layout,
+    breakdown: (concepts[index]?.breakdown ?? null) as import("@/components/dashboard/cover-results").ScoreBreakdown | null,
+  }));
 
   return (
     <div className="mx-auto max-w-3xl">

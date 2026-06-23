@@ -43,6 +43,8 @@ export async function POST(req: NextRequest) {
     mood: str(body.mood) || undefined,
     artStyle: str(body.artStyle) || undefined,
     audience: str(body.audience) || undefined,
+    niche: str(body.niche) || undefined,
+    opportunityScore: typeof body.opportunityScore === "number" ? body.opportunityScore : undefined,
     trim,
   };
 
@@ -98,7 +100,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       id: coverId,
       brief: { layout: brief.layout, typography: brief.typography, model: brief.model },
-      variations: keys.map((_, i) => ({ index: i, url: urls[i], score: conceptMeta[i].score, layout: conceptMeta[i].layout })),
+      variations: keys.map((_, i) => ({
+        index: i,
+        url: urls[i],
+        score: conceptMeta[i].score,
+        layout: conceptMeta[i].layout,
+        breakdown: (conceptMeta[i] as { breakdown?: unknown }).breakdown ?? null,
+      })),
     });
   } catch (err) {
     await refund(user.id, cost);
