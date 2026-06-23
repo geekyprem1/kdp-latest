@@ -30,8 +30,11 @@ export function NicheForm() {
           country: country || undefined,
         }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? `Failed (${res.status})`);
+      const text = await res.text();
+      const json = text ? JSON.parse(text) : {};
+      if (!res.ok) {
+        throw new Error(json.error ?? `Research failed (${res.status}). Please try again.`);
+      }
       router.push(`/dashboard/niche/${json.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
