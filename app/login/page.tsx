@@ -18,6 +18,14 @@ export default function LoginPage() {
     }
   }
 
+  // Auth redirect base. Prefer the public env (works in OAuth/magic-link emails
+  // even if the user starts the flow from localhost or a preview domain); fall
+  // back to the browser origin when unset (dev / unconfigured).
+  const authBase =
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ||
+    (typeof window !== "undefined" ? window.location.origin : "");
+  const callback = `${authBase}/auth/callback?next=/dashboard`;
+
   async function google() {
     setError(null);
     setBusy("google");
@@ -25,7 +33,7 @@ export default function LoginPage() {
     if (!supabase) return setBusy(null);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback?next=/dashboard` },
+      options: { redirectTo: callback },
     });
     if (error) {
       setError(error.message);
@@ -41,7 +49,7 @@ export default function LoginPage() {
     if (!supabase) return setBusy(null);
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard` },
+      options: { emailRedirectTo: callback },
     });
     setBusy(null);
     if (error) setError(error.message);
