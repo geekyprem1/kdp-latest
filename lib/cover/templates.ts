@@ -118,15 +118,29 @@ const GENRE_GRADIENTS: Record<CoverGenre, [string, string]> = {
   business: ["#0f172a", "#1e3a5f"],
   self_help: ["#7c3a00", "#c05a00"],
   puzzle:    ["#1a237e", "#0d47a1"],
-  kids:      ["#4a148c", "#c62828"],
+  kids:      ["#2d8fd5", "#1769aa"],
   coloring:  ["#004d40", "#00796b"],
   fiction:   ["#1a0a2e", "#6a1a3a"],
+};
+
+/**
+ * Solid band colors for the two band-based layouts. Giving typographyFirst and
+ * modernCommercial different shades means the 3 concepts no longer all share one
+ * flat color (e.g. kids is no longer "always purple").
+ */
+const GENRE_BANDS: Record<CoverGenre, { typo: string; modern: string }> = {
+  business:  { typo: "#0f172a", modern: "#13386b" },
+  self_help: { typo: "#7c3a00", modern: "#a85000" },
+  puzzle:    { typo: "#1a237e", modern: "#0d47a1" },
+  kids:      { typo: "#2d8fd5", modern: "#e8743b" }, // sky blue + warm orange — kid-friendly, no purple
+  coloring:  { typo: "#00695c", modern: "#00897b" },
+  fiction:   { typo: "#1a0a2e", modern: "#5a1130" },
 };
 
 /** Y-range (fraction of height) where the title text sits — used by scorer. */
 export function titleBandFor(layout: ConceptLayout): [number, number] {
   if (layout === "fullImage") return [0.06, 0.28];          // title floats top-safe-zone
-  if (layout === "typographyFirst") return [0.08, 0.52];   // title block is dominant
+  if (layout === "typographyFirst") return [0.08, 0.46];   // title block is dominant
   return [0.05, 0.32];                                      // modernCommercial: upper band
 }
 
@@ -196,8 +210,11 @@ function layoutTypographyFirst(opts: {
 }): string {
   const { g, genre, title, subtitle, author, bg, accentColor } = opts;
   const [gc1, gc2] = GENRE_GRADIENTS[genre];
+  const band = GENRE_BANDS[genre].typo;
+  // object-position center keeps a centered subject (e.g. a character) visible in
+  // the lower image strip instead of cropping its top off.
   const bgLayer = bg.kind === "image"
-    ? `<img src="${bg.dataUri}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center bottom">`
+    ? `<img src="${bg.dataUri}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center">`
     : `<div style="position:absolute;inset:0;background:linear-gradient(160deg,${gc1},${gc2})"></div>`;
 
   const fontSize = title.length > 20 ? "42pt" : title.length > 12 ? "52pt" : "64pt";
@@ -207,9 +224,10 @@ function layoutTypographyFirst(opts: {
     html,body{width:100%;height:100%;overflow:hidden}
     .cover{position:relative;width:100vw;height:100vh;overflow:hidden;font-family:${g.titleFont}}
 
-    /* Upper solid band — fully opaque so title is 100% legible at thumbnail size */
-    .upper-band{position:absolute;left:0;right:0;top:0;height:58%;background:${gc1};z-index:1}
-    .upper-band-gradient{position:absolute;left:0;right:0;top:55%;height:10%;background:linear-gradient(180deg,${gc1},transparent);z-index:2}
+    /* Upper solid band — opaque so title is 100% legible at thumbnail size. Kept to
+       ~46% so the artwork below has real room (no squished/cropped subject). */
+    .upper-band{position:absolute;left:0;right:0;top:0;height:46%;background:${band};z-index:1}
+    .upper-band-gradient{position:absolute;left:0;right:0;top:43%;height:10%;background:linear-gradient(180deg,${band},transparent);z-index:2}
 
     /* Image bleeds behind the lower portion */
     .image-layer{position:absolute;left:0;right:0;top:0;bottom:0}
@@ -222,7 +240,7 @@ function layoutTypographyFirst(opts: {
     .subtitle{font-size:13pt;font-weight:400;font-family:${g.subtitleFont};color:rgba(255,255,255,0.88);letter-spacing:0.01em;line-height:1.4}
 
     /* Author bottom of upper band */
-    .author-block{position:absolute;left:0.5in;right:0.5in;top:52%;transform:translateY(-100%);z-index:3;padding-bottom:0.18in}
+    .author-block{position:absolute;left:0.5in;right:0.5in;top:44%;transform:translateY(-100%);z-index:3;padding-bottom:0.18in}
     .author{font-size:11pt;font-weight:700;font-family:${g.authorFont};color:${accentColor};letter-spacing:0.12em;text-transform:uppercase}
 
     /* Gradient fade over image lower section */
@@ -257,6 +275,7 @@ function layoutModernCommercial(opts: {
 }): string {
   const { g, genre, title, subtitle, author, bg, accentColor } = opts;
   const [gc1, gc2] = GENRE_GRADIENTS[genre];
+  const band = GENRE_BANDS[genre].modern;
   const bgLayer = bg.kind === "image"
     ? `<img src="${bg.dataUri}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 60%">`
     : `<div style="position:absolute;inset:0;background:linear-gradient(160deg,${gc1},${gc2})"></div>`;
@@ -272,12 +291,12 @@ function layoutModernCommercial(opts: {
     .image-layer{position:absolute;inset:0}
 
     /* Thick top band for title */
-    .top-band{position:absolute;left:0;right:0;top:0;height:38%;background:${gc1};z-index:2}
-    .top-band-fade{position:absolute;left:0;right:0;top:35%;height:12%;background:linear-gradient(180deg,${gc1},transparent);z-index:2}
+    .top-band{position:absolute;left:0;right:0;top:0;height:38%;background:${band};z-index:2}
+    .top-band-fade{position:absolute;left:0;right:0;top:35%;height:12%;background:linear-gradient(180deg,${band},transparent);z-index:2}
 
     /* Thick bottom band for author */
-    .bottom-band{position:absolute;left:0;right:0;bottom:0;height:14%;background:${gc1};z-index:2}
-    .bottom-band-fade{position:absolute;left:0;right:0;bottom:13%;height:8%;background:linear-gradient(0deg,${gc1},transparent);z-index:2}
+    .bottom-band{position:absolute;left:0;right:0;bottom:0;height:14%;background:${band};z-index:2}
+    .bottom-band-fade{position:absolute;left:0;right:0;bottom:13%;height:8%;background:linear-gradient(0deg,${band},transparent);z-index:2}
 
     /* Accent stripe — bold color line between band and image */
     .accent-stripe{position:absolute;left:0;right:0;top:37%;height:5px;background:${accentColor};z-index:3}
