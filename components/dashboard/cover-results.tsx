@@ -13,11 +13,12 @@ export interface ScoreBreakdown {
 }
 
 export interface VisualQuality {
-  characterVisibility: number;
-  thumbnailReadability: number;
+  characterDominance: number;
+  thumbnailVisibility: number;
+  visualHierarchy: number;
+  bestsellerSimilarity: number;
   typographyBalance: number;
   commercialAppeal: number;
-  amazonClickPotential: number;
   overall: number;
 }
 
@@ -103,7 +104,7 @@ function VisualQualityPanel({ vq }: { vq: VisualQuality }) {
   return (
     <div className="mt-2 rounded-lg border border-[#C9A84C]/40 bg-[#FBF7EE] p-3 text-xs">
       <div className="mb-2 flex items-center justify-between">
-        <span className="font-semibold text-neutral-700">Visual Quality</span>
+        <span className="font-semibold text-neutral-700">Commercial Score</span>
         <span
           className="rounded-full px-2.5 py-0.5 text-[11px] font-bold"
           style={{ background: c.bg, color: c.fg, border: `1.5px solid ${c.ring}` }}
@@ -112,11 +113,12 @@ function VisualQualityPanel({ vq }: { vq: VisualQuality }) {
         </span>
       </div>
       <div className="space-y-1.5">
-        <ScoreBar label="Character Visibility" value={vq.characterVisibility} max={100} />
-        <ScoreBar label="Thumbnail Readability" value={vq.thumbnailReadability} max={100} />
+        <ScoreBar label="Character Dominance" value={vq.characterDominance} max={100} />
+        <ScoreBar label="Thumbnail Visibility" value={vq.thumbnailVisibility} max={100} />
+        <ScoreBar label="Visual Hierarchy" value={vq.visualHierarchy} max={100} />
+        <ScoreBar label="Bestseller Similarity" value={vq.bestsellerSimilarity} max={100} />
         <ScoreBar label="Typography Balance" value={vq.typographyBalance} max={100} />
         <ScoreBar label="Commercial Appeal" value={vq.commercialAppeal} max={100} />
-        <ScoreBar label="Click Potential" value={vq.amazonClickPotential} max={100} />
       </div>
     </div>
   );

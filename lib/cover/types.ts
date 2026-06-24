@@ -31,6 +31,33 @@ export const CONCEPT_LABELS: Record<ConceptLayout, string> = {
   modernCommercial: "Modern Commercial",
 };
 
+/**
+ * V4 commercial composition — what carries the cover, by genre. This is the single
+ * source of truth that drives prompts (how big the subject is), templates (how much
+ * room typography gets), and scoring (which dimensions are weighted highest).
+ *
+ *  character  — a hero character sells the book; artwork dominates 60–80%, title supports.
+ *  artwork    — a signature theme/scene sells it (puzzle pieces, coloring art, cinematic
+ *               fiction); artwork dominates, title supports.
+ *  typography — the title sells the book (business, self-help); typography dominates,
+ *               artwork is atmospheric and secondary.
+ */
+export type LayoutPriority = "character" | "artwork" | "typography";
+
+export const GENRE_PRIORITY: Record<CoverGenre, LayoutPriority> = {
+  kids: "character",
+  puzzle: "artwork",
+  coloring: "artwork",
+  fiction: "artwork",
+  business: "typography",
+  self_help: "typography",
+};
+
+/** True when the artwork (not the typography) is the primary commercial driver. */
+export function isArtworkDominant(genre: CoverGenre): boolean {
+  return GENRE_PRIORITY[genre] !== "typography";
+}
+
 export interface CoverInput {
   title: string;
   subtitle?: string;
@@ -64,15 +91,18 @@ export interface ScoreBreakdown {
 }
 
 /**
- * V3 visual-quality score — judged separately from the technical ScoreBreakdown.
- * All 0–100. Character visibility is weighted highest for kids/character genres.
+ * V4 commercial-composition score — modelled on top-100 Amazon KDP covers, judged
+ * separately from the technical ScoreBreakdown. All 0–100. The `overall` is a
+ * genre-weighted blend (see GENRE_PRIORITY): character/artwork genres weight
+ * dominance highest, typography genres weight the title treatment highest.
  */
 export interface VisualQuality {
-  characterVisibility: number;    // how much of the artwork/character is clearly visible
-  thumbnailReadability: number;   // title legibility at small (search-result) size
-  typographyBalance: number;      // title fit + clean (uncluttered) text zone
-  commercialAppeal: number;       // color richness + tonal balance
-  amazonClickPotential: number;   // blended click-driver score
+  characterDominance: number;    // how much of the cover the subject/character occupies (target 60–80%)
+  thumbnailVisibility: number;   // title + subject still recognizable at ~120px search-result size
+  visualHierarchy: number;       // does the dominant element match the genre's ideal priority order
+  bestsellerSimilarity: number;  // resemblance to top-performing KDP layouts for this genre
+  typographyBalance: number;     // title fit + clean (uncluttered) text zone
+  commercialAppeal: number;      // color richness + tonal balance
   overall: number;
 }
 

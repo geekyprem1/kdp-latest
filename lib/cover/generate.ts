@@ -114,7 +114,7 @@ async function renderConcept(
   const bytes = await renderPng(html, { widthIn: 6, heightIn: 9, dpi: 200 });
 
   const scoreOpts = {
-    titleBand: titleBandFor(layout),
+    titleBand: titleBandFor(layout, input.genre),
     hasSubtitle: Boolean(input.subtitle?.trim()),
     hasAuthor: Boolean(input.author?.trim()),
     titleLen: input.title.length,
@@ -124,13 +124,14 @@ async function renderConcept(
   const breakdown = scoreCoverDetailed(bytes, scoreOpts);
   const visualQuality = scoreVisualQuality(bytes, scoreOpts);
 
-  console.log(`[cover] Score: layout=${layout} bg=${bg.kind} overall=${breakdown.overall} charVis=${visualQuality.characterVisibility} click=${visualQuality.amazonClickPotential}`);
+  console.log(`[cover] Score: layout=${layout} bg=${bg.kind} commercial=${visualQuality.overall} dominance=${visualQuality.characterDominance} thumb=${visualQuality.thumbnailVisibility} technical=${breakdown.overall}`);
 
   return {
     concept: {
       layout,
       seed,
-      score: breakdown.overall,
+      // Headline score reflects commercial composition (V4); technical breakdown is kept for detail.
+      score: visualQuality.overall,
       breakdown,
       visualQuality,
       bg_source: bg.kind,

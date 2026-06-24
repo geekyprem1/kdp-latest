@@ -9,7 +9,7 @@
  * Genre-aware typography: each genre gets distinct font stack, weight, and color rules.
  */
 
-import type { CoverGenre, ConceptLayout } from "./types";
+import { isArtworkDominant, type CoverGenre, type ConceptLayout } from "./types";
 
 const esc = (s: string): string =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -137,20 +137,26 @@ const GENRE_BANDS: Record<CoverGenre, { typo: string; modern: string }> = {
   fiction:   { typo: "#1a0a2e", modern: "#5a1130" },
 };
 
-/** Genres whose covers are sold by the artwork/character — typography stays out of the way. */
-const CHARACTER_GENRES = new Set<CoverGenre>(["kids", "coloring", "puzzle"]);
-
-/** Title banner height (% of cover) for typographyFirst. Character genres get a slim
- *  top banner so ≥~68% of the cover stays artwork (character never covered). */
+/** Title banner height (% of cover) for typographyFirst. Artwork-dominant genres get a
+ *  slim top banner so ≥~76% of the cover stays artwork (the hero is never covered);
+ *  typography-dominant genres (business, self-help) keep a large title-led banner. */
 function typoBandPct(genre: CoverGenre): number {
-  return CHARACTER_GENRES.has(genre) ? 32 : 44;
+  return isArtworkDominant(genre) ? 24 : 44;
 }
 
-/** Y-range (fraction of height) where the title text sits — used by scorer. */
-export function titleBandFor(layout: ConceptLayout): [number, number] {
-  if (layout === "fullImage") return [0.05, 0.24];          // title floats in a tight top safe-zone
-  if (layout === "typographyFirst") return [0.06, 0.30];   // title banner across the top
-  return [0.05, 0.32];                                      // modernCommercial: upper band
+/** Y-range (fraction of height) where the title text sits — used by the scorer to
+ *  sample legibility. Genre-aware so it tracks the real band heights below. */
+export function titleBandFor(layout: ConceptLayout, genre: CoverGenre): [number, number] {
+  if (isArtworkDominant(genre)) {
+    // Slim title zones pinned to the very top — artwork keeps the majority of the cover.
+    if (layout === "typographyFirst") return [0.03, 0.24];
+    if (layout === "modernCommercial") return [0.05, 0.26];
+    return [0.03, 0.22]; // fullImage: title floats in a tight top safe-zone
+  }
+  // Typography-dominant: the title leads with a large block.
+  if (layout === "fullImage") return [0.05, 0.24];
+  if (layout === "typographyFirst") return [0.06, 0.36];
+  return [0.05, 0.36];                                      // modernCommercial: upper band
 }
 
 // ─── Concept A: Full Image Premium ───────────────────────────────────────────
@@ -220,21 +226,21 @@ function layoutTypographyFirst(opts: {
   const { g, genre, title, subtitle, author, bg, accentColor } = opts;
   const [gc1, gc2] = GENRE_GRADIENTS[genre];
   const band = GENRE_BANDS[genre].typo;
-  const character = CHARACTER_GENRES.has(genre);
-  const bandPct = typoBandPct(genre);     // 32% (character) or 44%
+  const artwork = isArtworkDominant(genre);
+  const bandPct = typoBandPct(genre);     // 24% (artwork-dominant) or 44% (typography-dominant)
   const gradTop = bandPct - 3;
   const authorTop = bandPct - 2;
-  // object-position center keeps a centered subject visible in the lower image strip.
+  // object-position center keeps the large centered subject visible below the slim banner.
   const bgLayer = bg.kind === "image"
     ? `<img src="${bg.dataUri}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center">`
     : `<div style="position:absolute;inset:0;background:linear-gradient(160deg,${gc1},${gc2})"></div>`;
 
-  // Slimmer banner for character genres → smaller title so it fits without growing.
-  const fontSize = character
-    ? (title.length > 20 ? "30pt" : title.length > 12 ? "38pt" : "46pt")
+  // Slim banner for artwork-dominant genres → compact title so the artwork keeps ≥76%.
+  const fontSize = artwork
+    ? (title.length > 20 ? "28pt" : title.length > 12 ? "36pt" : "44pt")
     : (title.length > 20 ? "42pt" : title.length > 12 ? "52pt" : "64pt");
-  // In the slim character banner, drop the in-band subtitle line to avoid crowding.
-  const showSubtitle = Boolean(subtitle) && (!character) && !(subtitle && subtitle.length > 40);
+  // In the slim artwork banner, drop the in-band subtitle line to avoid crowding.
+  const showSubtitle = Boolean(subtitle) && (!artwork) && !(subtitle && subtitle.length > 40);
 
   return `<!doctype html><html><head><meta charset="utf-8"><style>
     *{margin:0;padding:0;box-sizing:border-box}
@@ -242,7 +248,7 @@ function layoutTypographyFirst(opts: {
     .cover{position:relative;width:100vw;height:100vh;overflow:hidden;font-family:${g.titleFont}}
 
     /* Title banner — opaque so the title is 100% legible at thumbnail size. Slim for
-       character genres (${bandPct}%) so the artwork below is never covered. */
+       artwork-dominant genres (${bandPct}%) so the hero below is never covered. */
     .upper-band{position:absolute;left:0;right:0;top:0;height:${bandPct}%;background:${band};z-index:1}
     .upper-band-gradient{position:absolute;left:0;right:0;top:${gradTop}%;height:9%;background:linear-gradient(180deg,${band},transparent);z-index:2}
 
@@ -270,7 +276,7 @@ function layoutTypographyFirst(opts: {
       <div class="image-fade"></div>
       <div class="title-block">
         ${subtitle ? `<div class="genre-label">${esc(subtitle)}</div>` : ""}
-        <h1 class="title">${wrapTitle(title, character ? 14 : 16)}</h1>
+        <h1 class="title">${wrapTitle(title, artwork ? 14 : 16)}</h1>
         <div class="accent-rule"></div>
         ${showSubtitle && subtitle ? `<p class="subtitle">${esc(subtitle)}</p>` : ""}
       </div>
@@ -293,12 +299,49 @@ function layoutModernCommercial(opts: {
   const { g, genre, title, subtitle, author, bg, accentColor } = opts;
   const [gc1, gc2] = GENRE_GRADIENTS[genre];
   const band = GENRE_BANDS[genre].modern;
+  const artwork = isArtworkDominant(genre);
   const bgLayer = bg.kind === "image"
-    ? `<img src="${bg.dataUri}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 60%">`
+    ? `<img src="${bg.dataUri}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center ${artwork ? "55%" : "60%"}">`
     : `<div style="position:absolute;inset:0;background:linear-gradient(160deg,${gc1},${gc2})"></div>`;
 
-  const fontSize = title.length > 22 ? "36pt" : title.length > 14 ? "44pt" : "54pt";
+  if (artwork) {
+    // Artwork-dominant: full-bleed art with a compact floating title CARD near the top
+    // and a slim author bar at the bottom. The hero keeps ~70% of the cover.
+    const fontSize = title.length > 22 ? "30pt" : title.length > 14 ? "38pt" : "46pt";
+    return `<!doctype html><html><head><meta charset="utf-8"><style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{width:100%;height:100%;overflow:hidden}
+    .cover{position:relative;width:100vw;height:100vh;overflow:hidden;font-family:${g.titleFont}}
+    .image-layer{position:absolute;inset:0}
 
+    /* Floating title card — solid for full thumbnail legibility, with an accent base rule */
+    .title-card{position:absolute;left:0.32in;right:0.32in;top:0.34in;background:${band};border-radius:14px;
+      border-bottom:5px solid ${accentColor};padding:0.26in 0.3in;z-index:3;box-shadow:0 6px 22px rgba(0,0,0,0.35)}
+    .title{font-size:${fontSize};font-weight:${g.titleWeight};line-height:1.04;letter-spacing:${g.titleTracking};text-transform:${g.titleTransform};color:#fff;text-align:center}
+    .subtitle{margin-top:0.08in;font-size:11pt;font-weight:400;font-family:${g.subtitleFont};color:rgba(255,255,255,0.9);letter-spacing:0.01em;text-align:center}
+
+    /* Slim author bar at the very bottom */
+    .bottom-band{position:absolute;left:0;right:0;bottom:0;height:10%;background:${band};z-index:2}
+    .bottom-band-fade{position:absolute;left:0;right:0;bottom:10%;height:6%;background:linear-gradient(0deg,${band},transparent);z-index:2}
+    .author-block{position:absolute;left:0;right:0;bottom:0;height:10%;display:flex;align-items:center;justify-content:center;padding:0 0.45in;z-index:4}
+    .author-dot{width:6px;height:6px;border-radius:50%;background:${accentColor};margin-right:0.12in;flex-shrink:0}
+    .author{font-size:12pt;font-weight:700;font-family:${g.authorFont};color:rgba(255,255,255,0.95);letter-spacing:0.1em;text-transform:uppercase}
+  </style></head><body>
+    <div class="cover">
+      <div class="image-layer">${bgLayer}</div>
+      <div class="bottom-band"></div>
+      <div class="bottom-band-fade"></div>
+      <div class="title-card">
+        <h1 class="title">${wrapTitle(title, 16)}</h1>
+        ${subtitle ? `<p class="subtitle">${esc(subtitle)}</p>` : ""}
+      </div>
+      ${author ? `<div class="author-block"><div class="author-dot"></div><div class="author">${esc(author)}</div></div>` : ""}
+    </div>
+  </body></html>`;
+  }
+
+  // Typography-dominant: the title leads via a thick top band; artwork supports below.
+  const fontSize = title.length > 22 ? "36pt" : title.length > 14 ? "44pt" : "54pt";
   return `<!doctype html><html><head><meta charset="utf-8"><style>
     *{margin:0;padding:0;box-sizing:border-box}
     html,body{width:100%;height:100%;overflow:hidden}

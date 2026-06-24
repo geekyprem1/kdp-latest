@@ -9,7 +9,14 @@
 
 import { generateJson } from "../ai/provider";
 import { isAiConfigured } from "../ai/models";
-import { COVER_GENRE_LABELS, type CoverBrief, type CoverInput, type ConceptLayout } from "./types";
+import {
+  COVER_GENRE_LABELS,
+  GENRE_PRIORITY,
+  type CoverBrief,
+  type CoverInput,
+  type ConceptLayout,
+  type LayoutPriority,
+} from "./types";
 
 interface GenreProfile {
   mood: string;
@@ -48,7 +55,7 @@ const GENRE_PROFILE: Record<string, GenreProfile> = {
     motif: "bold geometric puzzle pieces, brain icons, activity-book energy, pop art patterns",
     designLanguage: "large playful titles, uppercase, bright saturated colors, strong border elements",
     accentColor: "#f39c12",
-    hardConstraint: "Bright bold illustration with multiple saturated primary colors (red, yellow, blue, green). Fun activity-book energy. NOT monochromatic. NOT dark or moody. NOT abstract-only. Include recognizable puzzle or game visual elements.",
+    hardConstraint: "A large, bold, instantly recognizable puzzle/game visual element dominates the frame (roughly 65–80%) — big puzzle pieces, a brain, a maze or game icon, up-close and unmistakable at thumbnail size. Bright bold illustration with multiple saturated primary colors (red, yellow, blue, green). Fun activity-book energy. NOT a tiny motif in empty space. NOT monochromatic. NOT dark or moody. NOT abstract-only.",
     promptQuality: "bold colorful activity book cover illustration quality",
   },
   kids: {
@@ -57,8 +64,8 @@ const GENRE_PROFILE: Record<string, GenreProfile> = {
     motif: "cute animal characters, cartoon landscapes, playful adventure scenes, friendly creatures",
     designLanguage: "rounded friendly typography, strong visual hierarchy, bold color blocking",
     accentColor: "#9b59b6",
-    hardConstraint: "MUST prominently feature at least one cute cartoon animal character as the clear focal point — a friendly animal with an expressive face and detailed body, clearly recognizable. The character's FULL FACE must be completely visible and NEVER cropped or cut off at any edge. Follow the layout direction for WHERE to place the character. Bright rainbow colors: grass green, sky blue, sunshine yellow, warm orange. Children's book illustration style. NOT abstract. NOT geometric shapes only. NOT a gradient-only background without a character.",
-    promptQuality: "children's book illustration quality, vibrant cartoon artwork, highly detailed cute animal character",
+    hardConstraint: "ONE cute cartoon animal character MUST be the large, dominant hero of the cover — it occupies roughly 65–80% of the frame, centered and up-close, like the best-selling children's picture books. Big, expressive, friendly face that is instantly recognizable even at thumbnail size. The character's FULL FACE and head must be completely visible and NEVER cropped or cut off at any edge. Bright rainbow colors: grass green, sky blue, sunshine yellow, warm orange. Children's book illustration style. NOT a tiny character in a wide scene. NOT abstract. NOT geometric shapes only. NOT a gradient-only background without a character.",
+    promptQuality: "children's book illustration quality, vibrant cartoon artwork, large highly detailed cute animal character filling the frame",
   },
   coloring: {
     mood: "calm, creative, inviting, gentle",
@@ -80,19 +87,47 @@ const GENRE_PROFILE: Record<string, GenreProfile> = {
   },
 };
 
-// Per-concept: what makes THIS layout's image distinct
-const CONCEPT_IMAGE_DIRECTION: Record<ConceptLayout, string> = {
-  fullImage: "Full cinematic composition filling the frame. Place the main subject/character in the LOWER-CENTER, with its FULL FACE and body clearly visible and NOT cropped at any edge. Keep the top ~25% calmer and less busy (open sky / soft background) so a floating title won't sit on the face. The image carries the full emotional weight of the cover.",
-  typographyFirst: "Reserve a clean, simple, low-detail TOP STRIP (upper ~32%: open sky or soft color field) for a title banner — nothing important there. Place the character fully within the LOWER ~68% of the frame, FULL FACE clearly visible, not cropped, and NOT touching the top edge. High-readability, artwork-first composition.",
-  modernCommercial: "Clean commercial illustration. Place the character clearly in the LOWER ~58% of the frame with its FULL FACE visible and uncropped. Keep the upper portion a simple, uncluttered area for a solid-color title band. Modern, polished, Amazon bestseller aesthetic.",
-};
+/**
+ * V4 image direction — driven by the genre's LayoutPriority, not just the concept.
+ *
+ * For character/artwork genres the subject must DOMINATE (60–80% of the frame) and stay
+ * recognizable at thumbnail size — only a calm top strip (~20%) is reserved for the title,
+ * so the artwork is never reduced to a strip behind a giant text band. Per-concept variety
+ * comes from framing/staging, not from shrinking the subject. For typography genres the
+ * artwork stays atmospheric and secondary, leaving a large calm zone for a dominant title.
+ */
+function imageDirection(priority: LayoutPriority, layout: ConceptLayout): string {
+  if (priority === "typography") {
+    const base =
+      "Clean, professional, atmospheric SUPPORTING artwork — it is secondary to the typography and must not compete with a large title. Keep a wide, calm, low-detail TOP AREA (upper ~42%) for a dominant title block. Restrained, premium, uncluttered.";
+    const perLayout: Record<ConceptLayout, string> = {
+      fullImage: "Cinematic full-bleed backdrop with depth; the lower portion holds the visual interest while the top stays open.",
+      typographyFirst: "Minimal, almost-abstract backdrop (texture, soft gradient field, single restrained motif) so the title block clearly leads.",
+      modernCommercial: "A single clean focal object or graphic motif in the lower third; the upper portion stays a flat, calm field for a solid title band.",
+    };
+    return `${base} ${perLayout[layout]}`;
+  }
+
+  // character / artwork: the subject is the hero and dominates the cover.
+  const subject = priority === "character" ? "hero character" : "signature theme element";
+  const base =
+    `The ${subject} is the HERO of the cover and DOMINATES it — occupying roughly 65–80% of the frame, large, up-close, centered, and instantly recognizable even when shrunk to a 120px thumbnail. Full face/subject completely visible and NEVER cropped at any edge. Reserve ONLY a calm, simple, low-detail TOP STRIP (upper ~20%: open sky or soft color field) for a title — nothing important there. Do NOT shrink the subject into a small element inside a wide empty scene. This must look like a top-selling Amazon cover, not a generic AI layout.`;
+  const perLayout: Record<ConceptLayout, string> = {
+    fullImage: "Cinematic, premium staging: rich environment around the large subject, warm depth and lighting. The subject fills the frame.",
+    typographyFirst: "Bright, clean, high-contrast staging on a simple background so the large subject pops at thumbnail size — maximum clarity.",
+    modernCommercial: "Dynamic, polished bestseller staging: confident pose/angle, bold saturated color, the large subject front-and-center.",
+  };
+  return `${base} ${perLayout[layout]}`;
+}
 
 function fallbackBrief(input: CoverInput, layout: ConceptLayout): CoverBrief {
   const gp = GENRE_PROFILE[input.genre] ?? GENRE_PROFILE.business;
+  const priority = GENRE_PRIORITY[input.genre] ?? "typography";
+  const direction = imageDirection(priority, layout);
   const audienceStr = input.audience ? `audience: ${input.audience}` : "";
   const nicheStr = input.niche ? `niche: ${input.niche}` : "";
   const context = [audienceStr, nicheStr].filter(Boolean).join(", ");
-  const basePrompt = `${gp.motif}, ${gp.mood} mood, ${gp.palette}, ${CONCEPT_IMAGE_DIRECTION[layout]}, vertical book cover composition, ${gp.promptQuality}, no text, no letters, no words. ${context}`;
+  const basePrompt = `${gp.motif}, ${gp.mood} mood, ${gp.palette}, ${direction}, vertical book cover composition, ${gp.promptQuality}, no text, no letters, no words. ${context}`;
   const imagePrompt = gp.hardConstraint
     ? `${basePrompt} ${gp.hardConstraint}`
     : basePrompt;
@@ -115,6 +150,9 @@ export async function generateConceptBrief(
 ): Promise<CoverBrief> {
   const gp = GENRE_PROFILE[input.genre] ?? GENRE_PROFILE.business;
   if (!isAiConfigured()) return fallbackBrief(input, layout);
+
+  const priority = GENRE_PRIORITY[input.genre] ?? "typography";
+  const direction = imageDirection(priority, layout);
 
   const opportunityCtx = input.opportunityScore
     ? `Opportunity score: ${input.opportunityScore}/100 — this book has strong market demand.`
@@ -150,7 +188,7 @@ Genre design language: ${gp.designLanguage}
 Genre palette: ${gp.palette}
 Genre motif: ${gp.motif}${constraintNote}
 
-Layout concept direction: ${CONCEPT_IMAGE_DIRECTION[layout]}
+Layout concept direction: ${direction}
 
 Return JSON:
 {
@@ -178,7 +216,7 @@ Return JSON:
       accentColor: typeof data.accentColor === "string" && /^#[0-9a-f]{6}$/i.test(data.accentColor)
         ? data.accentColor
         : gp.accentColor,
-      layout: CONCEPT_IMAGE_DIRECTION[layout],
+      layout: direction,
       typography: typeof data.typography === "string" ? data.typography.trim() : gp.designLanguage,
       model,
     };
