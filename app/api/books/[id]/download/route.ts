@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getBookSignedUrl } from "@/lib/storage";
+import { rateLimit, rateLimitResponse } from "@/lib/util/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,6 +19,8 @@ export async function GET(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const rl = rateLimit(`dl-book:${user.id}`, 60);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
 
   // RLS ensures the user can only read their own book.
   const { data: book } = await supabase

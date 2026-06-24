@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getBytes } from "@/lib/storage";
 import { buildPackageZip, type PackageAsset, type PackageData, type PublishContext } from "@/lib/publishing";
 import { buildEbookPdf } from "@/lib/export/pdf";
+import { rateLimit, rateLimitResponse } from "@/lib/util/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,6 +49,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const rl = rateLimit(`dl-package:${user.id}`, 20);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
 
   // RLS scopes the package to the owner.
   const { data: pkg } = await supabase
@@ -86,6 +89,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     headers: {
       "Content-Type": "application/zip",
       "Content-Disposition": `attachment; filename="${slug(book.title)}-publish-package.zip"`,
+      // Short browser cache to avoid re-running the build on repeat downloads;
+      // kept brief since the ebook interior is rebuilt from editable chapters.
+      "Cache-Control": "private, max-age=60",
     },
   });
 }

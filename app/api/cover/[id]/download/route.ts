@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getBookSignedUrl } from "@/lib/storage";
+import { rateLimit, rateLimitResponse } from "@/lib/util/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,6 +15,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const rl = rateLimit(`dl-cover:${user.id}`, 60);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
 
   // RLS scopes the cover to the owner.
   const { data: cover } = await supabase.from("covers").select("variation_keys").eq("id", id).single();

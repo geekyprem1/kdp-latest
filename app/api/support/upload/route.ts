@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { putBytes, isStorageConfigured } from "@/lib/storage";
+import { rateLimit, rateLimitResponse } from "@/lib/util/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,6 +15,8 @@ export async function POST(req: NextRequest) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const rl = rateLimit(`support-upload:${user.id}`, 10);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
   if (!isStorageConfigured()) return NextResponse.json({ error: "Storage not configured" }, { status: 503 });
 
   let form: FormData;

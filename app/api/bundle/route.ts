@@ -38,29 +38,44 @@ export async function POST(req: NextRequest) {
   const difficulty = typeof body.difficulty === "string" ? body.difficulty : "medium";
   const bundleSize = Math.min(4, Math.max(2, Number(body.bundleSize) || 4));
 
-  // ── recommend composition via the Opportunity Engine ──
-  const analysis = await analyzeTopic({ topic, audience });
-  const fitOf = (t: PipelineBookType) => analysis.types.find((x) => x.type === t)?.fit ?? 0;
+  const costOf = (t: PipelineBookType) => costFor(t, { count: DEFAULT_COUNT[t] });
+  const explicitTypes = Array.isArray(body.types) && body.types.length
+    ? (body.types as string[]).filter((t): t is PipelineBookType => PUZZLE_TYPES.includes(t as PipelineBookType))
+    : null;
 
-  let selected: PipelineBookType[];
-  if (Array.isArray(body.types) && body.types.length) {
-    selected = (body.types as string[]).filter((t): t is PipelineBookType => PUZZLE_TYPES.includes(t as PipelineBookType));
-  } else {
-    selected = [...PUZZLE_TYPES].sort((a, b) => fitOf(b) - fitOf(a)).slice(0, bundleSize);
-  }
-  if (selected.length === 0) selected = PUZZLE_TYPES.slice(0, bundleSize);
-
-  // ── billing: Publishing Factory™ feature + summed credit cost ──
-  const costByType = Object.fromEntries(selected.map((t) => [t, costFor(t, { count: DEFAULT_COUNT[t] })])) as Record<PipelineBookType, number>;
-  const totalCost = selected.reduce((s, t) => s + costByType[t], 0);
+  // ── PAYWALL BEFORE ANY AI (M1) ──
+  // Gate the feature and reserve credits BEFORE calling the Opportunity Engine, so a
+  // user can never trigger an OpenRouter call without paying first. For auto-selection
+  // we don't yet know the exact mix, so we reserve the worst-case cost for the bundle
+  // size and refund the unused difference once the real composition is chosen.
+  const provisionalCost = explicitTypes && explicitTypes.length
+    ? explicitTypes.reduce((s, t) => s + costOf(t), 0)
+    : [...PUZZLE_TYPES].map(costOf).sort((a, b) => b - a).slice(0, bundleSize).reduce((s, c) => s + c, 0);
   try {
     await assertFeature(user.id, "factory");
-    await reserve(user.id, totalCost, "bundle");
+    await reserve(user.id, provisionalCost, "bundle");
   } catch (e) {
     const r = billingErrorResponse(e);
     if (r) return r;
     throw e;
   }
+
+  // ── now safe to call the Opportunity Engine ──
+  const analysis = await analyzeTopic({ topic, audience });
+  const fitOf = (t: PipelineBookType) => analysis.types.find((x) => x.type === t)?.fit ?? 0;
+
+  let selected: PipelineBookType[];
+  if (explicitTypes && explicitTypes.length) {
+    selected = explicitTypes;
+  } else {
+    selected = [...PUZZLE_TYPES].sort((a, b) => fitOf(b) - fitOf(a)).slice(0, bundleSize);
+  }
+  if (selected.length === 0) selected = PUZZLE_TYPES.slice(0, bundleSize);
+
+  const costByType = Object.fromEntries(selected.map((t) => [t, costOf(t)])) as Record<PipelineBookType, number>;
+  const plannedCost = selected.reduce((s, t) => s + costByType[t], 0);
+  // Refund any over-reservation (auto-selection chose a cheaper mix than worst-case).
+  if (provisionalCost > plannedCost) await refund(user.id, provisionalCost - plannedCost, "bundle");
 
   const admin = getSupabaseAdminClient();
   const { data: bundle, error: bErr } = await admin

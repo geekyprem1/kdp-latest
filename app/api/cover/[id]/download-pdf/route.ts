@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getBytes } from "@/lib/storage";
 import { renderPdf } from "@/lib/pdf/render";
+import { rateLimit, rateLimitResponse } from "@/lib/util/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,6 +25,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const rl = rateLimit(`dl-coverpdf:${user.id}`, 20);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
 
   const { data: cover } = await supabase.from("covers").select("title, trim, variation_keys").eq("id", id).single();
   if (!cover) return NextResponse.json({ error: "Cover not found" }, { status: 404 });
@@ -46,6 +49,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="${slug(cover.title as string)}-cover.pdf"`,
+      // Artifact caching: let the browser reuse a freshly built PDF instead of
+      // re-triggering a Puppeteer render on repeat downloads.
+      "Cache-Control": "private, max-age=60",
     },
   });
 }

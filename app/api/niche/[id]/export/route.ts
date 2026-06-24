@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { renderNicheReportPdf } from "@/lib/niche/report-pdf";
 import type { NicheReport } from "@/lib/niche/types";
+import { rateLimit, rateLimitResponse } from "@/lib/util/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,6 +19,8 @@ export async function GET(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const rl = rateLimit(`export-niche:${user.id}`, 20);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
 
   // RLS scopes this to the owner.
   const { data: report } = await supabase
@@ -39,6 +42,8 @@ export async function GET(
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="niche-${slug}.pdf"`,
+      // Niche reports are immutable once generated → cache the rebuilt PDF longer.
+      "Cache-Control": "private, max-age=300",
     },
   });
 }

@@ -4,6 +4,7 @@ import {
   createTicket, TICKET_CATEGORIES, TICKET_PRIORITIES,
   type TicketCategory, type TicketPriority, type Attachment,
 } from "@/lib/support/tickets";
+import { rateLimit, rateLimitResponse } from "@/lib/util/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,6 +13,8 @@ export async function POST(req: NextRequest) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const rl = rateLimit(`support:${user.id}`, 5);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
 
   let body: Record<string, unknown>;
   try {

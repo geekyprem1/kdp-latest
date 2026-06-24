@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import JSZip from "jszip";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getBytes } from "@/lib/storage";
+import { rateLimit, rateLimitResponse } from "@/lib/util/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,6 +17,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const rl = rateLimit(`export-bundle:${user.id}`, 20);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
 
   // RLS scopes both to the owner.
   const { data: bundle } = await supabase.from("bundles").select("id, topic").eq("id", id).single();
@@ -43,6 +46,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     headers: {
       "Content-Type": "application/zip",
       "Content-Disposition": `attachment; filename="bundle-${slug(bundle.topic)}.zip"`,
+      // Bundles package already-completed book PDFs → safe to cache the ZIP.
+      "Cache-Control": "private, max-age=300",
     },
   });
 }

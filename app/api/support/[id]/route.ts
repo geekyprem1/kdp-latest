@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { addReply, type Attachment } from "@/lib/support/tickets";
+import { rateLimit, rateLimitResponse } from "@/lib/util/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,6 +12,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const rl = rateLimit(`support-reply:${user.id}`, 20);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
 
   const { id: ticketId } = await params;
   let body: Record<string, unknown>;

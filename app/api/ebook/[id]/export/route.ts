@@ -4,6 +4,7 @@ import { buildEbookPdf } from "@/lib/export/pdf";
 import { buildEpub } from "@/lib/export/epub";
 import { buildDocx } from "@/lib/export/docx";
 import type { EbookData } from "@/lib/generators/ebook/types";
+import { rateLimit, rateLimitResponse } from "@/lib/util/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,6 +30,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const rl = rateLimit(`export-ebook:${user.id}`, 20);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
 
   const { data: book } = await supabase
     .from("books")
@@ -64,6 +67,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     headers: {
       "Content-Type": FORMATS[format].mime,
       "Content-Disposition": `attachment; filename="${slug}.${FORMATS[format].ext}"`,
+      // Short browser cache so repeat downloads don't re-run the build; kept brief
+      // because ebook chapters are editable.
+      "Cache-Control": "private, max-age=60",
     },
   });
 }
