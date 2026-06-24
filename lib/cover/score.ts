@@ -5,7 +5,9 @@
  */
 
 import { PNG } from "pngjs";
-import type { ConceptLayout, ScoreBreakdown } from "./types";
+import type { ConceptLayout, ScoreBreakdown, VisualQuality } from "./types";
+
+const pct = (n: number): number => Math.max(0, Math.min(100, Math.round(n)));
 
 interface ScoreOpts {
   titleBand: [number, number];
@@ -68,11 +70,11 @@ function sampleHueVariety(
   return buckets.filter((b) => b > threshold).length; // 0–12
 }
 
-/** Image zone by layout — area where background artwork is visible (no solid bands). */
+/** Image zone by layout — area where the character/artwork is visible (no solid bands). */
 function imageZone(layout: ConceptLayout): [number, number] {
-  if (layout === "typographyFirst")  return [0.60, 1.00]; // below the 58% solid upper band
-  if (layout === "modernCommercial") return [0.40, 0.84]; // between top and bottom bands
-  return [0.30, 0.70];                                    // fullImage: middle (scrim-free)
+  if (layout === "typographyFirst")  return [0.36, 1.00]; // below the slim top title banner
+  if (layout === "modernCommercial") return [0.42, 0.82]; // between top and bottom bands
+  return [0.28, 0.92];                                    // fullImage: lower-center character zone
 }
 
 export function scoreCoverDetailed(pngBytes: Uint8Array, opts: ScoreOpts): ScoreBreakdown {
@@ -158,6 +160,59 @@ export function scoreCoverDetailed(pngBytes: Uint8Array, opts: ScoreOpts): Score
       genreMatch: 8,
       commercialPotential: 7,
       overall: 64,
+    };
+  }
+}
+
+/**
+ * V3 visual-quality score — judged separately from the technical breakdown, with
+ * character visibility weighted highest. Pixel heuristics (no ML): hue variety in
+ * the artwork zone approximates how visible the character is; band darkness/contrast
+ * approximates thumbnail legibility. All dimensions 0–100.
+ */
+export function scoreVisualQuality(pngBytes: Uint8Array, opts: ScoreOpts): VisualQuality {
+  try {
+    const png = PNG.sync.read(Buffer.from(pngBytes));
+    const { width, height, data } = png;
+
+    const [iz0, iz1] = imageZone(opts.layout);
+    const artVariety = sampleHueVariety(data, width, height, iz0, iz1);          // 0–12
+    const titleVariety = sampleHueVariety(data, width, height, opts.titleBand[0], opts.titleBand[1]);
+    const titleBand = sampleBand(data, width, height, opts.titleBand[0], opts.titleBand[1]);
+    const full = sampleBand(data, width, height, 0, 1);
+    const fullVariety = sampleHueVariety(data, width, height, 0, 1);
+
+    // 1. Character visibility — rich, varied color in the artwork zone = a clearly
+    //    visible character/illustration (flat band/gradient scores low).
+    const characterVisibility = pct((artVariety / 8) * 100);
+
+    // 2. Thumbnail readability — dark, high-contrast title area + a short title.
+    const darkness = Math.max(0, (200 - titleBand.mean) / 200);
+    const lenFactor = opts.titleLen <= 18 ? 1 : opts.titleLen <= 30 ? 0.82 : 0.62;
+    const thumbnailReadability = pct((darkness * 0.7 + Math.min(1, titleBand.contrast / 60) * 0.3) * 100 * lenFactor + 12);
+
+    // 3. Typography balance — title fits its length AND sits over a clean (low-variety) zone.
+    const cleanBand = Math.max(0, 1 - titleVariety / 6);
+    const typographyBalance = pct((lenFactor * 0.5 + cleanBand * 0.5) * 100);
+
+    // 4. Commercial appeal — color richness + tonal interest across the whole cover.
+    const interest = Math.min(1, full.contrast / 55);
+    const commercialAppeal = pct((Math.min(1, fullVariety / 8) * 0.6 + interest * 0.4) * 100);
+
+    // 5. Amazon click potential — what actually drives clicks in search results.
+    const amazonClickPotential = pct(
+      0.42 * characterVisibility + 0.33 * thumbnailReadability + 0.25 * commercialAppeal
+    );
+
+    const overall = Math.round(
+      (characterVisibility + thumbnailReadability + typographyBalance + commercialAppeal + amazonClickPotential) / 5
+    );
+
+    return { characterVisibility, thumbnailReadability, typographyBalance, commercialAppeal, amazonClickPotential, overall };
+  } catch {
+    return {
+      characterVisibility: 60, thumbnailReadability: 65, typographyBalance: 60,
+      commercialAppeal: 60, amazonClickPotential: 62, overall: 61,
     };
   }
 }

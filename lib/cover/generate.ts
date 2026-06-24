@@ -19,7 +19,7 @@ import { renderPng } from "../pdf/render";
 import { fluxSchnell, isReplicateConfigured } from "../ai/replicate";
 import { generateConceptBrief, generateCoverBrief } from "./prompt";
 import { coverHtml, titleBandFor, type CoverBg } from "./templates";
-import { scoreCoverDetailed } from "./score";
+import { scoreCoverDetailed, scoreVisualQuality } from "./score";
 import {
   CONCEPT_LAYOUTS,
   type BuiltConcept,
@@ -113,16 +113,18 @@ async function renderConcept(
   });
   const bytes = await renderPng(html, { widthIn: 6, heightIn: 9, dpi: 200 });
 
-  const breakdown = scoreCoverDetailed(bytes, {
+  const scoreOpts = {
     titleBand: titleBandFor(layout),
     hasSubtitle: Boolean(input.subtitle?.trim()),
     hasAuthor: Boolean(input.author?.trim()),
     titleLen: input.title.length,
     layout,
     genre: input.genre,
-  });
+  };
+  const breakdown = scoreCoverDetailed(bytes, scoreOpts);
+  const visualQuality = scoreVisualQuality(bytes, scoreOpts);
 
-  console.log(`[cover] Score: layout=${layout} bg=${bg.kind} overall=${breakdown.overall} genreMatch=${breakdown.genreMatch}`);
+  console.log(`[cover] Score: layout=${layout} bg=${bg.kind} overall=${breakdown.overall} charVis=${visualQuality.characterVisibility} click=${visualQuality.amazonClickPotential}`);
 
   return {
     concept: {
@@ -130,6 +132,7 @@ async function renderConcept(
       seed,
       score: breakdown.overall,
       breakdown,
+      visualQuality,
       bg_source: bg.kind,
     },
     bytes,

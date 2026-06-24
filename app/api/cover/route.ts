@@ -106,6 +106,7 @@ export async function POST(req: NextRequest) {
         score: conceptMeta[i].score,
         layout: conceptMeta[i].layout,
         breakdown: (conceptMeta[i] as { breakdown?: unknown }).breakdown ?? null,
+        visualQuality: (conceptMeta[i] as { visualQuality?: unknown }).visualQuality ?? null,
       })),
     });
   } catch (err) {

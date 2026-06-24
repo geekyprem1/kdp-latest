@@ -57,7 +57,7 @@ const GENRE_PROFILE: Record<string, GenreProfile> = {
     motif: "cute animal characters, cartoon landscapes, playful adventure scenes, friendly creatures",
     designLanguage: "rounded friendly typography, strong visual hierarchy, bold color blocking",
     accentColor: "#9b59b6",
-    hardConstraint: "MUST prominently feature at least one cute cartoon animal character as the clear focal point — a friendly animal with an expressive face and detailed body, clearly recognizable. Follow the layout direction for WHERE to place the character. Bright rainbow colors: grass green, sky blue, sunshine yellow, warm orange. Children's book illustration style. NOT abstract. NOT geometric shapes only. NOT a gradient-only background without a character.",
+    hardConstraint: "MUST prominently feature at least one cute cartoon animal character as the clear focal point — a friendly animal with an expressive face and detailed body, clearly recognizable. The character's FULL FACE must be completely visible and NEVER cropped or cut off at any edge. Follow the layout direction for WHERE to place the character. Bright rainbow colors: grass green, sky blue, sunshine yellow, warm orange. Children's book illustration style. NOT abstract. NOT geometric shapes only. NOT a gradient-only background without a character.",
     promptQuality: "children's book illustration quality, vibrant cartoon artwork, highly detailed cute animal character",
   },
   coloring: {
@@ -82,9 +82,9 @@ const GENRE_PROFILE: Record<string, GenreProfile> = {
 
 // Per-concept: what makes THIS layout's image distinct
 const CONCEPT_IMAGE_DIRECTION: Record<ConceptLayout, string> = {
-  fullImage: "Full cinematic composition filling the entire frame. Subject centered or rule-of-thirds. Deep atmospheric background. The image should carry the full emotional weight of the cover.",
-  typographyFirst: "Keep the UPPER 40% of the frame as open, simple, low-detail background (clear sky, soft color field, or gentle gradient) reserved for a title band — nothing important up there. Place the main subject/character fully within the LOWER 60% of the frame so it is never covered by the title. Clean, high-readability composition.",
-  modernCommercial: "Clean commercial illustration style. Subject clearly visible in lower 60% of frame. Upper portion has a clean solid-color or gradient band for title placement. Modern, polished, Amazon bestseller aesthetic.",
+  fullImage: "Full cinematic composition filling the frame. Place the main subject/character in the LOWER-CENTER, with its FULL FACE and body clearly visible and NOT cropped at any edge. Keep the top ~25% calmer and less busy (open sky / soft background) so a floating title won't sit on the face. The image carries the full emotional weight of the cover.",
+  typographyFirst: "Reserve a clean, simple, low-detail TOP STRIP (upper ~32%: open sky or soft color field) for a title banner — nothing important there. Place the character fully within the LOWER ~68% of the frame, FULL FACE clearly visible, not cropped, and NOT touching the top edge. High-readability, artwork-first composition.",
+  modernCommercial: "Clean commercial illustration. Place the character clearly in the LOWER ~58% of the frame with its FULL FACE visible and uncropped. Keep the upper portion a simple, uncluttered area for a solid-color title band. Modern, polished, Amazon bestseller aesthetic.",
 };
 
 function fallbackBrief(input: CoverInput, layout: ConceptLayout): CoverBrief {

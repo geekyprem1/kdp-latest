@@ -137,10 +137,19 @@ const GENRE_BANDS: Record<CoverGenre, { typo: string; modern: string }> = {
   fiction:   { typo: "#1a0a2e", modern: "#5a1130" },
 };
 
+/** Genres whose covers are sold by the artwork/character — typography stays out of the way. */
+const CHARACTER_GENRES = new Set<CoverGenre>(["kids", "coloring", "puzzle"]);
+
+/** Title banner height (% of cover) for typographyFirst. Character genres get a slim
+ *  top banner so ≥~68% of the cover stays artwork (character never covered). */
+function typoBandPct(genre: CoverGenre): number {
+  return CHARACTER_GENRES.has(genre) ? 32 : 44;
+}
+
 /** Y-range (fraction of height) where the title text sits — used by scorer. */
 export function titleBandFor(layout: ConceptLayout): [number, number] {
-  if (layout === "fullImage") return [0.06, 0.28];          // title floats top-safe-zone
-  if (layout === "typographyFirst") return [0.08, 0.42];   // title block is dominant
+  if (layout === "fullImage") return [0.05, 0.24];          // title floats in a tight top safe-zone
+  if (layout === "typographyFirst") return [0.06, 0.30];   // title banner across the top
   return [0.05, 0.32];                                      // modernCommercial: upper band
 }
 
@@ -211,40 +220,48 @@ function layoutTypographyFirst(opts: {
   const { g, genre, title, subtitle, author, bg, accentColor } = opts;
   const [gc1, gc2] = GENRE_GRADIENTS[genre];
   const band = GENRE_BANDS[genre].typo;
-  // object-position center keeps a centered subject (e.g. a character) visible in
-  // the lower image strip instead of cropping its top off.
+  const character = CHARACTER_GENRES.has(genre);
+  const bandPct = typoBandPct(genre);     // 32% (character) or 44%
+  const gradTop = bandPct - 3;
+  const authorTop = bandPct - 2;
+  // object-position center keeps a centered subject visible in the lower image strip.
   const bgLayer = bg.kind === "image"
     ? `<img src="${bg.dataUri}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center">`
     : `<div style="position:absolute;inset:0;background:linear-gradient(160deg,${gc1},${gc2})"></div>`;
 
-  const fontSize = title.length > 20 ? "42pt" : title.length > 12 ? "52pt" : "64pt";
+  // Slimmer banner for character genres → smaller title so it fits without growing.
+  const fontSize = character
+    ? (title.length > 20 ? "30pt" : title.length > 12 ? "38pt" : "46pt")
+    : (title.length > 20 ? "42pt" : title.length > 12 ? "52pt" : "64pt");
+  // In the slim character banner, drop the in-band subtitle line to avoid crowding.
+  const showSubtitle = Boolean(subtitle) && (!character) && !(subtitle && subtitle.length > 40);
 
   return `<!doctype html><html><head><meta charset="utf-8"><style>
     *{margin:0;padding:0;box-sizing:border-box}
     html,body{width:100%;height:100%;overflow:hidden}
     .cover{position:relative;width:100vw;height:100vh;overflow:hidden;font-family:${g.titleFont}}
 
-    /* Upper solid band — opaque so title is 100% legible at thumbnail size. Kept to
-       ~42% (matches the prompt's "open upper 40%") so the subject below shows fully. */
-    .upper-band{position:absolute;left:0;right:0;top:0;height:42%;background:${band};z-index:1}
-    .upper-band-gradient{position:absolute;left:0;right:0;top:39%;height:10%;background:linear-gradient(180deg,${band},transparent);z-index:2}
+    /* Title banner — opaque so the title is 100% legible at thumbnail size. Slim for
+       character genres (${bandPct}%) so the artwork below is never covered. */
+    .upper-band{position:absolute;left:0;right:0;top:0;height:${bandPct}%;background:${band};z-index:1}
+    .upper-band-gradient{position:absolute;left:0;right:0;top:${gradTop}%;height:9%;background:linear-gradient(180deg,${band},transparent);z-index:2}
 
     /* Image bleeds behind the lower portion */
     .image-layer{position:absolute;left:0;right:0;top:0;bottom:0}
 
-    /* Text block inside the upper band */
-    .title-block{position:absolute;left:0;right:0;top:0;padding:0.5in 0.5in 0;z-index:3}
-    .genre-label{font-size:9pt;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:${accentColor};margin-bottom:0.14in;font-family:${g.authorFont}}
+    /* Text block inside the banner */
+    .title-block{position:absolute;left:0;right:0;top:0;padding:0.42in 0.5in 0;z-index:3}
+    .genre-label{font-size:9pt;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:${accentColor};margin-bottom:0.12in;font-family:${g.authorFont}}
     .title{font-size:${fontSize};font-weight:${g.titleWeight};line-height:1.02;letter-spacing:${g.titleTracking};text-transform:${g.titleTransform};color:#fff;text-shadow:none}
-    .accent-rule{width:100%;height:3px;background:linear-gradient(90deg,${accentColor},transparent);margin:0.18in 0 0.14in;border-radius:2px}
+    .accent-rule{width:100%;height:3px;background:linear-gradient(90deg,${accentColor},transparent);margin:0.16in 0 0.12in;border-radius:2px}
     .subtitle{font-size:13pt;font-weight:400;font-family:${g.subtitleFont};color:rgba(255,255,255,0.88);letter-spacing:0.01em;line-height:1.4}
 
-    /* Author bottom of upper band */
-    .author-block{position:absolute;left:0.5in;right:0.5in;top:40%;transform:translateY(-100%);z-index:3;padding-bottom:0.18in}
+    /* Author at the bottom of the banner */
+    .author-block{position:absolute;left:0.5in;right:0.5in;top:${authorTop}%;transform:translateY(-100%);z-index:3;padding-bottom:0.16in}
     .author{font-size:11pt;font-weight:700;font-family:${g.authorFont};color:${accentColor};letter-spacing:0.12em;text-transform:uppercase}
 
-    /* Gradient fade over image lower section */
-    .image-fade{position:absolute;left:0;right:0;bottom:0;height:40%;background:linear-gradient(0deg,rgba(0,0,0,0.55),transparent);z-index:2}
+    /* Gentle fade at the very bottom for depth */
+    .image-fade{position:absolute;left:0;right:0;bottom:0;height:32%;background:linear-gradient(0deg,rgba(0,0,0,0.45),transparent);z-index:2}
   </style></head><body>
     <div class="cover">
       <div class="image-layer">${bgLayer}</div>
@@ -253,9 +270,9 @@ function layoutTypographyFirst(opts: {
       <div class="image-fade"></div>
       <div class="title-block">
         ${subtitle ? `<div class="genre-label">${esc(subtitle)}</div>` : ""}
-        <h1 class="title">${wrapTitle(title, 16)}</h1>
+        <h1 class="title">${wrapTitle(title, character ? 14 : 16)}</h1>
         <div class="accent-rule"></div>
-        ${subtitle && subtitle.length > 40 ? "" : subtitle ? `<p class="subtitle">${esc(subtitle)}</p>` : ""}
+        ${showSubtitle && subtitle ? `<p class="subtitle">${esc(subtitle)}</p>` : ""}
       </div>
       ${author ? `<div class="author-block"><div class="author">${esc(author)}</div></div>` : ""}
     </div>

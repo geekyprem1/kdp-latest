@@ -12,12 +12,22 @@ export interface ScoreBreakdown {
   overall: number;
 }
 
+export interface VisualQuality {
+  characterVisibility: number;
+  thumbnailReadability: number;
+  typographyBalance: number;
+  commercialAppeal: number;
+  amazonClickPotential: number;
+  overall: number;
+}
+
 export interface CoverVariation {
   index: number;
   url: string;
   score?: number;
   layout?: string;
   breakdown?: ScoreBreakdown | null;
+  visualQuality?: VisualQuality | null;
   bg_source?: "image" | "gradient" | null;
 }
 
@@ -88,6 +98,30 @@ function ScorePanel({ breakdown }: { breakdown: ScoreBreakdown }) {
   );
 }
 
+function VisualQualityPanel({ vq }: { vq: VisualQuality }) {
+  const c = overallColor(vq.overall);
+  return (
+    <div className="mt-2 rounded-lg border border-[#C9A84C]/40 bg-[#FBF7EE] p-3 text-xs">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="font-semibold text-neutral-700">Visual Quality</span>
+        <span
+          className="rounded-full px-2.5 py-0.5 text-[11px] font-bold"
+          style={{ background: c.bg, color: c.fg, border: `1.5px solid ${c.ring}` }}
+        >
+          {vq.overall}/100
+        </span>
+      </div>
+      <div className="space-y-1.5">
+        <ScoreBar label="Character Visibility" value={vq.characterVisibility} max={100} />
+        <ScoreBar label="Thumbnail Readability" value={vq.thumbnailReadability} max={100} />
+        <ScoreBar label="Typography Balance" value={vq.typographyBalance} max={100} />
+        <ScoreBar label="Commercial Appeal" value={vq.commercialAppeal} max={100} />
+        <ScoreBar label="Click Potential" value={vq.amazonClickPotential} max={100} />
+      </div>
+    </div>
+  );
+}
+
 export function CoverResults({
   coverId,
   variations: initial,
@@ -121,7 +155,7 @@ export function CoverResults({
       setVariations((prev) =>
         prev.map((v) =>
           v.index === index
-            ? { ...v, url: `${json.url}#${Date.now()}`, score: json.score, breakdown: json.breakdown ?? v.breakdown, bg_source: json.bg_source ?? v.bg_source }
+            ? { ...v, url: `${json.url}#${Date.now()}`, score: json.score, breakdown: json.breakdown ?? v.breakdown, visualQuality: json.visualQuality ?? v.visualQuality, bg_source: json.bg_source ?? v.bg_source }
             : v
         )
       );
@@ -216,14 +250,21 @@ export function CoverResults({
                 <img src={v.url} alt={label} className="w-full block" />
               </div>
 
-              {/* Score breakdown (expandable) */}
+              {/* Visual quality (always shown — V3 artwork-first score) */}
+              {v.visualQuality && (
+                <div className="px-3 pt-2">
+                  <VisualQualityPanel vq={v.visualQuality} />
+                </div>
+              )}
+
+              {/* Technical score breakdown (expandable) */}
               {v.breakdown && (
                 <div className="px-3 pt-2">
                   <button
                     onClick={() => setExpanded(showBreakdown ? null : v.index)}
                     className="w-full text-[10px] text-neutral-400 hover:text-neutral-600 flex items-center justify-between"
                   >
-                    <span>Score breakdown</span>
+                    <span>Technical breakdown</span>
                     <span>{showBreakdown ? "▲" : "▼"}</span>
                   </button>
                   {showBreakdown && <ScorePanel breakdown={v.breakdown} />}

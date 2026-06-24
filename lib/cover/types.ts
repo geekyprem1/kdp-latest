@@ -63,11 +63,26 @@ export interface ScoreBreakdown {
   overall: number;             // 0–100
 }
 
+/**
+ * V3 visual-quality score — judged separately from the technical ScoreBreakdown.
+ * All 0–100. Character visibility is weighted highest for kids/character genres.
+ */
+export interface VisualQuality {
+  characterVisibility: number;    // how much of the artwork/character is clearly visible
+  thumbnailReadability: number;   // title legibility at small (search-result) size
+  typographyBalance: number;      // title fit + clean (uncluttered) text zone
+  commercialAppeal: number;       // color richness + tonal balance
+  amazonClickPotential: number;   // blended click-driver score
+  overall: number;
+}
+
 export interface CoverConcept {
   layout: ConceptLayout;
   seed: number;
   score: number;           // overall 0-100 for backward compat
   breakdown: ScoreBreakdown;
+  /** V3 artwork-first quality score (separate from breakdown). */
+  visualQuality?: VisualQuality;
   /** "image" = real Replicate generation; "gradient" = CSS fallback. Always present on V2 concepts. */
   bg_source?: "image" | "gradient";
 }
