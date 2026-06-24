@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { recoverQueuedJobs } from "@/lib/jobs/job-queue";
 import { BOOK_TYPE_LABELS, type BookType } from "@/lib/opportunity";
 import { AutoRefresh } from "@/components/dashboard/auto-refresh";
+import { ActiveProgress } from "@/components/dashboard/active-progress";
 import { JobActions } from "@/components/dashboard/job-actions";
 
 export const dynamic = "force-dynamic";
@@ -76,12 +77,7 @@ export default async function InProgressPage() {
               </div>
 
               {(j.status === "queued" || j.status === "processing") && (
-                <div className="mt-3">
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-100">
-                    <div className="h-full bg-neutral-900 transition-all" style={{ width: `${j.progress}%` }} />
-                  </div>
-                  <div className="mt-1 text-xs text-neutral-500">{j.current_step ?? "Working…"} · {j.progress}%</div>
-                </div>
+                <ActiveProgress progress={j.progress} currentStep={j.current_step} />
               )}
               {j.status === "failed" && j.error_message && (
                 <p className="mt-2 text-xs text-red-600">{j.error_message}</p>

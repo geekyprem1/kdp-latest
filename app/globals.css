@@ -9,3 +9,8 @@
 body {
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
+
+/* Generation-progress animations (used on the in-progress list + detail). */
+@keyframes kdpm-shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+@keyframes kdpm-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .45; transform: scale(.85); } }
+@keyframes kdpm-spin { to { transform: rotate(360deg); } }
