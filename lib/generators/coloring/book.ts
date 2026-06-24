@@ -9,7 +9,7 @@ import type { InteriorPageContent } from "../../pdf/templates/interior";
 import { PRODUCTION_DEFAULTS } from "../../config/defaults";
 import { hashSeed } from "../../util/prng";
 import { buildColoringPrompt, buildSubjects } from "./prompt";
-import { generateLineArt } from "./image";
+import { generateLineArt, generateCoverArt } from "./image";
 import { validateColoringImage } from "./validate-image";
 import {
   MIN_COLORING_PAGES,
@@ -172,6 +172,20 @@ export async function buildColoringBook(opts: ColoringBookOptions): Promise<Colo
 
   const interior = await buildInteriorPdf({ trim, pageCount, bleed }, interiorPages);
 
+  // Colorful AI front-cover illustration — best effort. If it fails (e.g. Replicate
+  // throttle), the cover falls back to the plain template instead of failing the book.
+  let frontImage: string | undefined;
+  try {
+    const coverPrompt =
+      `vibrant full-color children's book cover illustration of ${config.theme}, ` +
+      `cute cartoon ${config.style} style, bright cheerful colors, playful, centered composition, ` +
+      `no text, clean soft background, professional kids coloring book cover art`;
+    const art = await generateCoverArt({ prompt: coverPrompt, seed: config.seed + 99_999 });
+    frontImage = dataUri(art);
+  } catch (e) {
+    console.error("[coloring] cover art generation failed; using plain cover:", e);
+  }
+
   const cover = await buildCoverPdf({
     trim,
     pageCount,
@@ -180,6 +194,7 @@ export async function buildColoringBook(opts: ColoringBookOptions): Promise<Colo
       title: config.title,
       subtitle: config.subtitle,
       author: config.author,
+      frontImage,
       backText:
         opts.backText ??
         `${config.pageCount} ${config.style} ${config.theme} coloring pages for ${config.ageGroup}. Single-sided, bold outlines, and tons of fun to color.`,

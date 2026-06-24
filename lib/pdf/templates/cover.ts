@@ -19,6 +19,9 @@ export interface CoverContent {
   /** Background color for the full cover (placeholder art for the gate). */
   background?: string;
   spineColor?: string;
+  /** Optional full-bleed front-panel illustration (data URI). When set, the title
+   *  block renders over a readable bottom scrim instead of a flat color. */
+  frontImage?: string;
 }
 
 export function renderCoverHtml(spec: CoverSpec, content: CoverContent): string {
@@ -78,8 +81,16 @@ export function renderCoverHtml(spec: CoverSpec, content: CoverContent): string 
     justify-content: center;
     text-align: center;
   }
+  /* With an illustration: art fills the panel, title sits in a readable bottom band. */
+  .front--art { padding: 0; justify-content: flex-end; }
+  .front-art { position: absolute; inset: 0; background-size: cover; background-position: center; }
+  .front-scrim { position: absolute; inset: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.78) 100%); }
+  .front-text { position: relative; }
+  .front--art .front-text { padding: ${SAFE_INSET_IN}in; text-shadow: 0 2px 8px rgba(0,0,0,0.65); }
   .front h1 { font-size: 34pt; margin: 0 0 0.15in; }
   .front h2 { font-size: 16pt; font-weight: normal; opacity: 0.9; margin: 0 0 0.6in; }
+  .front--art h2 { margin: 0 0 0.25in; }
   .front .author { font-size: 14pt; opacity: 0.95; }
 </style>
 </head>
@@ -97,10 +108,15 @@ export function renderCoverHtml(spec: CoverSpec, content: CoverContent): string 
       }
     </div>
 
-    <div class="panel front">
-      <h1>${content.title}</h1>
-      <h2>${content.subtitle}</h2>
-      <div class="author">${content.author}</div>
+    <div class="panel front${content.frontImage ? " front--art" : ""}">
+      ${content.frontImage
+        ? `<div class="front-art" style="background-image:url('${content.frontImage}')"></div><div class="front-scrim"></div>`
+        : ""}
+      <div class="front-text">
+        <h1>${content.title}</h1>
+        <h2>${content.subtitle}</h2>
+        <div class="author">${content.author}</div>
+      </div>
     </div>
   </div>
 </body>

@@ -40,14 +40,9 @@ async function poll(url: string, token: string): Promise<Prediction> {
   throw new Error("Replicate prediction timed out");
 }
 
-/** Generate one line-art PNG. `seed` makes FLUX output reproducible. */
-export async function generateLineArt(opts: {
-  prompt: string;
-  seed: number;
-}): Promise<Uint8Array> {
-  const token = process.env.REPLICATE_API_TOKEN;
-  if (!token) return placeholderLineArt(opts);
-
+/** Low-level FLUX image call shared by line-art and cover-art generation, with
+ *  429 backoff so a transient throttle doesn't fail the job. */
+async function runFlux(prompt: string, seed: number, token: string): Promise<Uint8Array> {
   let pred: Prediction | null = null;
   for (let attempt = 0; attempt < MAX_REPLICATE_TRIES; attempt++) {
     const res = await fetch(
@@ -61,12 +56,12 @@ export async function generateLineArt(opts: {
         },
         body: JSON.stringify({
           input: {
-            prompt: opts.prompt,
+            prompt,
             aspect_ratio: "3:4",
             num_outputs: 1,
             output_format: "png",
             megapixels: "1",
-            seed: opts.seed,
+            seed,
           },
         }),
       }
@@ -103,6 +98,20 @@ export async function generateLineArt(opts: {
   const img = await fetch(outUrl);
   if (!img.ok) throw new Error(`Failed to fetch image: ${img.status}`);
   return new Uint8Array(await img.arrayBuffer());
+}
+
+/** Generate one black-and-white line-art PNG. `seed` makes FLUX output reproducible. */
+export async function generateLineArt(opts: { prompt: string; seed: number }): Promise<Uint8Array> {
+  const token = process.env.REPLICATE_API_TOKEN;
+  if (!token) return placeholderLineArt(opts);
+  return runFlux(opts.prompt, opts.seed, token);
+}
+
+/** Generate one full-color cover illustration PNG for the coloring-book front cover. */
+export async function generateCoverArt(opts: { prompt: string; seed: number }): Promise<Uint8Array> {
+  const token = process.env.REPLICATE_API_TOKEN;
+  if (!token) return placeholderLineArt(opts);
+  return runFlux(opts.prompt, opts.seed, token);
 }
 
 /**
