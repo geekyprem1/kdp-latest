@@ -10,6 +10,13 @@ import { renderPng } from "../../pdf/render";
 
 const FLUX_MODEL = "black-forest-labs/flux-schnell";
 
+// Replicate throttles "creating predictions" (429) — harshly while the account has
+// < $10 credit (60/min, burst 5). We retry the prediction POST a few times with
+// backoff so a transient throttle doesn't fail an otherwise-successful book.
+const MAX_REPLICATE_TRIES = 3;
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 export function isReplicateConfigured(): boolean {
   return Boolean(process.env.REPLICATE_API_TOKEN);
 }
@@ -41,33 +48,48 @@ export async function generateLineArt(opts: {
   const token = process.env.REPLICATE_API_TOKEN;
   if (!token) return placeholderLineArt(opts);
 
-  const res = await fetch(
-    `https://api.replicate.com/v1/models/${FLUX_MODEL}/predictions`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        Prefer: "wait",
-      },
-      body: JSON.stringify({
-        input: {
-          prompt: opts.prompt,
-          aspect_ratio: "3:4",
-          num_outputs: 1,
-          output_format: "png",
-          megapixels: "1",
-          seed: opts.seed,
+  let pred: Prediction | null = null;
+  for (let attempt = 0; attempt < MAX_REPLICATE_TRIES; attempt++) {
+    const res = await fetch(
+      `https://api.replicate.com/v1/models/${FLUX_MODEL}/predictions`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Prefer: "wait",
         },
-      }),
+        body: JSON.stringify({
+          input: {
+            prompt: opts.prompt,
+            aspect_ratio: "3:4",
+            num_outputs: 1,
+            output_format: "png",
+            megapixels: "1",
+            seed: opts.seed,
+          },
+        }),
+      }
+    );
+
+    // Rate-limited: wait (Retry-After if provided, else exponential backoff) and retry.
+    if (res.status === 429) {
+      if (attempt >= MAX_REPLICATE_TRIES - 1) {
+        throw new Error(`Replicate throttled (429) after ${MAX_REPLICATE_TRIES} attempts`);
+      }
+      const retryAfter = Number(res.headers.get("retry-after"));
+      const waitMs = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 2000 * 2 ** attempt;
+      await sleep(waitMs);
+      continue;
     }
-  );
-
-  if (!res.ok) {
-    throw new Error(`Replicate error ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    if (!res.ok) {
+      throw new Error(`Replicate error ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    }
+    pred = (await res.json()) as Prediction;
+    break;
   }
+  if (!pred) throw new Error("Replicate: no prediction created");
 
-  let pred = (await res.json()) as Prediction;
   if (pred.status !== "succeeded" && pred.urls?.get) {
     pred = await poll(pred.urls.get, token);
   }

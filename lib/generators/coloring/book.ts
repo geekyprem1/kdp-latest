@@ -19,7 +19,10 @@ import {
 } from "./types";
 
 const MAX_ATTEMPTS = 3;
-const CONCURRENCY = 4;
+// Kept low so concurrent FLUX calls stay within Replicate's burst limit (5 while
+// the account has < $10 credit). Combined with 429 backoff in image.ts, this lets
+// a full 22-page book finish without a single throttled request failing the job.
+const CONCURRENCY = 2;
 
 export interface ColoringBookOptions {
   theme: string;
