@@ -57,7 +57,7 @@ const GENRE_PROFILE: Record<string, GenreProfile> = {
     motif: "cute animal characters, cartoon landscapes, playful adventure scenes, friendly creatures",
     designLanguage: "rounded friendly typography, strong visual hierarchy, bold color blocking",
     accentColor: "#9b59b6",
-    hardConstraint: "MUST prominently feature at least one cute cartoon animal character as the clear focal point — a friendly animal with expressive face and detailed body, centered in the composition. Bright rainbow colors: grass green, sky blue, sunshine yellow, warm orange. Children's book illustration style. NOT abstract. NOT geometric shapes only. NOT gradient-only background without a character. The animal character must be clearly recognizable and occupy the center of the frame.",
+    hardConstraint: "MUST prominently feature at least one cute cartoon animal character as the clear focal point — a friendly animal with an expressive face and detailed body, clearly recognizable. Follow the layout direction for WHERE to place the character. Bright rainbow colors: grass green, sky blue, sunshine yellow, warm orange. Children's book illustration style. NOT abstract. NOT geometric shapes only. NOT a gradient-only background without a character.",
     promptQuality: "children's book illustration quality, vibrant cartoon artwork, highly detailed cute animal character",
   },
   coloring: {
@@ -83,7 +83,7 @@ const GENRE_PROFILE: Record<string, GenreProfile> = {
 // Per-concept: what makes THIS layout's image distinct
 const CONCEPT_IMAGE_DIRECTION: Record<ConceptLayout, string> = {
   fullImage: "Full cinematic composition filling the entire frame. Subject centered or rule-of-thirds. Deep atmospheric background. The image should carry the full emotional weight of the cover.",
-  typographyFirst: "Bold graphic background — strong color field, abstract texture, or atmospheric gradient. The top third and bottom third must have high contrast for text overlay. Subject if any is subtle, pushed to edges or abstract.",
+  typographyFirst: "Keep the UPPER 40% of the frame as open, simple, low-detail background (clear sky, soft color field, or gentle gradient) reserved for a title band — nothing important up there. Place the main subject/character fully within the LOWER 60% of the frame so it is never covered by the title. Clean, high-readability composition.",
   modernCommercial: "Clean commercial illustration style. Subject clearly visible in lower 60% of frame. Upper portion has a clean solid-color or gradient band for title placement. Modern, polished, Amazon bestseller aesthetic.",
 };
 

@@ -140,7 +140,7 @@ const GENRE_BANDS: Record<CoverGenre, { typo: string; modern: string }> = {
 /** Y-range (fraction of height) where the title text sits — used by scorer. */
 export function titleBandFor(layout: ConceptLayout): [number, number] {
   if (layout === "fullImage") return [0.06, 0.28];          // title floats top-safe-zone
-  if (layout === "typographyFirst") return [0.08, 0.46];   // title block is dominant
+  if (layout === "typographyFirst") return [0.08, 0.42];   // title block is dominant
   return [0.05, 0.32];                                      // modernCommercial: upper band
 }
 
@@ -225,9 +225,9 @@ function layoutTypographyFirst(opts: {
     .cover{position:relative;width:100vw;height:100vh;overflow:hidden;font-family:${g.titleFont}}
 
     /* Upper solid band — opaque so title is 100% legible at thumbnail size. Kept to
-       ~46% so the artwork below has real room (no squished/cropped subject). */
-    .upper-band{position:absolute;left:0;right:0;top:0;height:46%;background:${band};z-index:1}
-    .upper-band-gradient{position:absolute;left:0;right:0;top:43%;height:10%;background:linear-gradient(180deg,${band},transparent);z-index:2}
+       ~42% (matches the prompt's "open upper 40%") so the subject below shows fully. */
+    .upper-band{position:absolute;left:0;right:0;top:0;height:42%;background:${band};z-index:1}
+    .upper-band-gradient{position:absolute;left:0;right:0;top:39%;height:10%;background:linear-gradient(180deg,${band},transparent);z-index:2}
 
     /* Image bleeds behind the lower portion */
     .image-layer{position:absolute;left:0;right:0;top:0;bottom:0}
@@ -240,7 +240,7 @@ function layoutTypographyFirst(opts: {
     .subtitle{font-size:13pt;font-weight:400;font-family:${g.subtitleFont};color:rgba(255,255,255,0.88);letter-spacing:0.01em;line-height:1.4}
 
     /* Author bottom of upper band */
-    .author-block{position:absolute;left:0.5in;right:0.5in;top:44%;transform:translateY(-100%);z-index:3;padding-bottom:0.18in}
+    .author-block{position:absolute;left:0.5in;right:0.5in;top:40%;transform:translateY(-100%);z-index:3;padding-bottom:0.18in}
     .author{font-size:11pt;font-weight:700;font-family:${g.authorFont};color:${accentColor};letter-spacing:0.12em;text-transform:uppercase}
 
     /* Gradient fade over image lower section */
