@@ -15,8 +15,13 @@ let browserPromise: Promise<Browser> | null = null;
 
 async function getBrowser(): Promise<Browser> {
   if (!browserPromise) {
+    // PUPPETEER_EXECUTABLE_PATH lets the deploy env (Coolify/Docker) point at a
+    // system Chromium so we don't ship the 300MB bundled browser inside the image.
+    // Unset locally → puppeteer uses its own bundled Chromium as before.
+    const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
     browserPromise = puppeteer.launch({
       headless: true,
+      executablePath,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
   }

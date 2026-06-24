@@ -1,10 +1,18 @@
 # Nixpacks build config (Coolify / Railway).
 #
-# Puppeteer's postinstall downloads Chromium and needs `unzip` / `tar` to extract
-# it. The base build image doesn't have them on PATH, so `npm ci` fails with:
-#   "Required native binary ('tar', 'unzip') was not found in the system PATH."
-# Adding them here lets the bundled Chromium extract. The Chromium *runtime* libs
-# (libnss3, libgbm1, libgtk-3, etc.) are already auto-installed by Nixpacks'
-# Puppeteer detection, so the browser launches with --no-sandbox at runtime.
+# We DON'T let Puppeteer download its own Chromium during `npm ci` — that needs
+# extra RAM and disk in the build container (often OOM-kills the build). Instead
+# we install the system chromium via apt and point Puppeteer at it via env vars.
+# Runtime libs Chromium needs are already pulled in by Puppeteer's autodetection.
+
 [phases.setup]
-aptPkgs = ["unzip", "tar", "gzip"]
+aptPkgs = [
+  "unzip", "tar", "gzip", "curl", "wget",
+  "chromium-browser",
+]
+
+[variables]
+# Skip the bundled Chromium download during `npm ci` (saves ~300 MB + build RAM).
+PUPPETEER_SKIP_DOWNLOAD = "true"
+# Tell Puppeteer/our code to launch the apt-installed Chromium instead.
+PUPPETEER_EXECUTABLE_PATH = "/usr/bin/chromium-browser"
