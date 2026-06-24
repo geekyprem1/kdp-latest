@@ -2,6 +2,17 @@
 
 import { useState } from "react";
 import { CoverResults, type BookOption, type CoverVariation } from "./cover-results";
+import { InlineGenerating } from "./inline-generating";
+
+const COVER_MESSAGES = [
+  "Reading your brief…",
+  "Designing concept 1 — cinematic full image…",
+  "Painting the artwork…",
+  "Designing concept 2 — bestseller typography…",
+  "Designing concept 3 — modern commercial…",
+  "Scoring for thumbnail readability…",
+  "Finishing your concepts…",
+];
 
 const GENRES: Array<{ value: string; label: string }> = [
   { value: "business", label: "Business" },
@@ -96,6 +107,13 @@ export function CoverGenerator({ books }: { books: BookOption[] }) {
           {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
         </div>
       </form>
+
+      {busy && (
+        <InlineGenerating
+          messages={COVER_MESSAGES}
+          note="Generating 3 distinct concepts with AI artwork — this usually takes up to a minute. Please keep this tab open."
+        />
+      )}
 
       {result && (
         <div className="mt-6">

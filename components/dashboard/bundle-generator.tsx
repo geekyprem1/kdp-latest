@@ -3,6 +3,15 @@
 import { useState } from "react";
 import Link from "next/link";
 import { BOOK_TYPE_LABELS, recommendationBadge, BADGE_COLORS, type BookType } from "@/lib/opportunity";
+import { InlineGenerating } from "./inline-generating";
+
+const BUNDLE_MESSAGES = [
+  "Recommending the best book mix…",
+  "Generating your books one by one…",
+  "Building puzzles & artwork…",
+  "Rendering print-ready PDFs…",
+  "Packaging your bundle…",
+];
 
 const PUZZLE_TYPES: BookType[] = ["word_search", "sudoku", "maze", "coloring"];
 const DIFFICULTIES = ["easy", "medium", "hard"];
@@ -135,9 +144,11 @@ export function BundleGenerator() {
   // ── GENERATING ──
   if (phase === "generating") {
     return (
-      <div className="rounded-lg border border-neutral-200 p-6">
-        <h2 className="text-lg font-semibold">Generating bundle…</h2>
-        <p className="mt-1 text-sm text-neutral-500">Reusing each generator — this can take a few minutes.</p>
+      <div>
+        <InlineGenerating
+          messages={BUNDLE_MESSAGES}
+          note="Generating multiple books reuses each generator and can take a few minutes. Please keep this tab open."
+        />
         <ul className="mt-4 space-y-1.5">
           {[...selected].map((t) => (
             <li key={t} className="flex items-center gap-2 text-sm text-neutral-600">

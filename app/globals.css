@@ -14,3 +14,4 @@ body {
 @keyframes kdpm-shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
 @keyframes kdpm-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .45; transform: scale(.85); } }
 @keyframes kdpm-spin { to { transform: rotate(360deg); } }
+@keyframes kdpm-indeterminate { 0% { left: -40%; } 100% { left: 100%; } }
