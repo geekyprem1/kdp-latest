@@ -85,7 +85,18 @@ export async function renderPng(
       height,
       deviceScaleFactor: dpi / CSS_PX_PER_IN,
     });
+    // "load" waits for the linked Google Fonts stylesheet, but web-font FILES are fetched
+    // lazily, so the explicit fonts.ready guards against the screenshot capturing the
+    // fallback font. Bounded so a slow/blocked font CDN can never hang the render — we
+    // simply fall back to system fonts in that case.
     await page.setContent(html, { waitUntil: "load" });
+    try {
+      await page.evaluate(
+        () => Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 4000))])
+      );
+    } catch {
+      /* font readiness is best-effort; proceed with whatever is loaded */
+    }
     return await page.screenshot({
       type: "png",
       clip: { x: 0, y: 0, width, height },

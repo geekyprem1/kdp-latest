@@ -31,81 +31,151 @@ function wrapTitle(title: string, maxLen = 18): string {
   return lines.map(esc).join("<br>");
 }
 
+/**
+ * Genre Typography Engine — each genre gets a dedicated identity: font family, weight,
+ * title + subtitle treatment, a color system, and decoration rules. Fonts are loaded as
+ * web fonts (see FONT_LINKS) so they render identically on every platform, including the
+ * Linux Chromium used in production (system fonts like Arial Black / Trebuchet don't exist
+ * there and would collapse every genre to the same fallback).
+ */
 interface GenreTypography {
   titleFont: string;
   titleWeight: number;
   titleTransform: string;
   titleTracking: string;
+  titleColor: string;    // title fill color
+  titleStroke: string;   // -webkit-text-stroke value (e.g. "2px #5b21b6" or "0px transparent")
+  titleShadow: string;   // text-shadow value — part of the decoration system
   subtitleFont: string;
+  subtitleWeight: number;
+  subtitleStyle: string; // "normal" | "italic"
+  subtitleColor: string;
   authorFont: string;
-  accentBar: string;   // CSS color for the decorative bar/accent
+  accentBar: string;     // CSS color for the decorative bar/accent
   overlayStrong: string; // strong scrim for text areas
   overlayLight: string;  // lighter scrim for image areas
 }
 
+/**
+ * Single combined Google Fonts request, injected into every cover's <head>. display=swap
+ * keeps text visible while loading; renderPng additionally awaits document.fonts.ready so
+ * the final screenshot always uses the real font, not the fallback.
+ */
+const FONT_LINKS =
+  '<link rel="preconnect" href="https://fonts.googleapis.com">' +
+  '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' +
+  '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?' +
+  "family=Baloo+2:wght@600;700;800&family=Cinzel:wght@600;700;800&" +
+  "family=EB+Garamond:ital@0;1&family=Inter:wght@400;600;800;900&" +
+  "family=Luckiest+Guy&family=Montserrat:wght@400;600;800;900&" +
+  "family=Nunito:wght@400;700;800&family=Pacifico&family=Patrick+Hand&" +
+  'family=Quicksand:wght@500;600;700&display=swap">';
+
 const GENRE_TYPO: Record<CoverGenre, GenreTypography> = {
+  // Premium · professional · minimalist — wide geometric caps, gold, max whitespace.
   business: {
-    titleFont: "'Arial Black', 'Helvetica Neue', Arial, sans-serif",
+    titleFont: "'Montserrat', 'Arial Black', Arial, sans-serif",
     titleWeight: 900,
     titleTransform: "uppercase",
-    titleTracking: "0.04em",
-    subtitleFont: "Arial, Helvetica, sans-serif",
-    authorFont: "Arial, Helvetica, sans-serif",
+    titleTracking: "0.08em",
+    titleColor: "#ffffff",
+    titleStroke: "0px transparent",
+    titleShadow: "0 1px 8px rgba(0,0,0,0.35)",
+    subtitleFont: "'Montserrat', Arial, sans-serif",
+    subtitleWeight: 400,
+    subtitleStyle: "normal",
+    subtitleColor: "rgba(255,255,255,0.9)",
+    authorFont: "'Montserrat', Arial, sans-serif",
     accentBar: "#c9a84c",
     overlayStrong: "rgba(10,20,40,0.82)",
     overlayLight: "rgba(10,20,40,0.35)",
   },
+  // Ebook · modern · clean — neutral humanist sans, tight tracking, minimal.
   self_help: {
-    titleFont: "Georgia, 'Times New Roman', serif",
-    titleWeight: 700,
+    titleFont: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+    titleWeight: 800,
     titleTransform: "none",
-    titleTracking: "0.01em",
-    subtitleFont: "Georgia, serif",
-    authorFont: "Arial, Helvetica, sans-serif",
+    titleTracking: "-0.01em",
+    titleColor: "#ffffff",
+    titleStroke: "0px transparent",
+    titleShadow: "0 1px 10px rgba(0,0,0,0.4)",
+    subtitleFont: "'Inter', Arial, sans-serif",
+    subtitleWeight: 400,
+    subtitleStyle: "normal",
+    subtitleColor: "rgba(255,255,255,0.9)",
+    authorFont: "'Inter', Arial, sans-serif",
     accentBar: "#e67e22",
     overlayStrong: "rgba(20,10,5,0.78)",
     overlayLight: "rgba(20,10,5,0.28)",
   },
+  // Bold · energetic — comic display, yellow fill + navy outline, hard shadow.
   puzzle: {
-    titleFont: "'Arial Black', Impact, Arial, sans-serif",
-    titleWeight: 900,
+    titleFont: "'Luckiest Guy', Impact, 'Arial Black', sans-serif",
+    titleWeight: 400,
     titleTransform: "uppercase",
-    titleTracking: "0.06em",
-    subtitleFont: "'Arial Black', Arial, sans-serif",
-    authorFont: "Arial, Helvetica, sans-serif",
+    titleTracking: "0.02em",
+    titleColor: "#ffe14d",
+    titleStroke: "3px #0b1457",
+    titleShadow: "0 4px 0 rgba(0,0,0,0.45), 0 8px 16px rgba(0,0,0,0.4)",
+    subtitleFont: "'Nunito', Arial, sans-serif",
+    subtitleWeight: 800,
+    subtitleStyle: "normal",
+    subtitleColor: "rgba(255,255,255,0.95)",
+    authorFont: "'Nunito', Arial, sans-serif",
     accentBar: "#f39c12",
     overlayStrong: "rgba(0,30,80,0.85)",
     overlayLight: "rgba(0,30,80,0.40)",
   },
+  // Playful · rounded · colorful — soft rounded display, white fill + purple outline.
   kids: {
-    titleFont: "'Trebuchet MS', 'Comic Sans MS', sans-serif",
+    titleFont: "'Baloo 2', 'Trebuchet MS', sans-serif",
     titleWeight: 800,
     titleTransform: "none",
-    titleTracking: "0.02em",
-    subtitleFont: "'Trebuchet MS', sans-serif",
-    authorFont: "'Trebuchet MS', sans-serif",
+    titleTracking: "0.01em",
+    titleColor: "#ffffff",
+    titleStroke: "2px #5b21b6",
+    titleShadow: "0 3px 0 rgba(0,0,0,0.18), 0 6px 14px rgba(0,0,0,0.35)",
+    subtitleFont: "'Quicksand', 'Trebuchet MS', sans-serif",
+    subtitleWeight: 600,
+    subtitleStyle: "normal",
+    subtitleColor: "rgba(255,255,255,0.95)",
+    authorFont: "'Quicksand', 'Trebuchet MS', sans-serif",
     accentBar: "#9b59b6",
     overlayStrong: "rgba(30,0,60,0.75)",
     overlayLight: "rgba(30,0,60,0.28)",
   },
+  // Hand-drawn · artistic — brush script, cream ink, soft shadow, airy.
   coloring: {
-    titleFont: "'Arial Black', Arial, sans-serif",
-    titleWeight: 900,
+    titleFont: "'Pacifico', 'Brush Script MT', cursive",
+    titleWeight: 400,
     titleTransform: "none",
-    titleTracking: "0.03em",
-    subtitleFont: "Arial, sans-serif",
-    authorFont: "Arial, sans-serif",
-    accentBar: "#1abc9c",
+    titleTracking: "0.01em",
+    titleColor: "#fff7ed",
+    titleStroke: "0px transparent",
+    titleShadow: "0 2px 10px rgba(0,0,0,0.4)",
+    subtitleFont: "'Patrick Hand', 'Comic Sans MS', cursive",
+    subtitleWeight: 400,
+    subtitleStyle: "normal",
+    subtitleColor: "rgba(255,247,237,0.92)",
+    authorFont: "'Patrick Hand', 'Comic Sans MS', cursive",
+    accentBar: "#14b8a6",
     overlayStrong: "rgba(0,50,60,0.72)",
     overlayLight: "rgba(0,50,60,0.22)",
   },
+  // Cinematic · elegant — engraved Roman caps, epic tracking, italic serif subtitle.
   fiction: {
-    titleFont: "Georgia, 'Palatino Linotype', 'Times New Roman', serif",
-    titleWeight: 700,
-    titleTransform: "none",
-    titleTracking: "-0.01em",
-    subtitleFont: "Georgia, serif",
-    authorFont: "Georgia, serif",
+    titleFont: "'Cinzel', Georgia, 'Times New Roman', serif",
+    titleWeight: 800,
+    titleTransform: "uppercase",
+    titleTracking: "0.12em",
+    titleColor: "#f5efe0",
+    titleStroke: "0px transparent",
+    titleShadow: "0 2px 18px rgba(0,0,0,0.7), 0 1px 3px rgba(0,0,0,0.85)",
+    subtitleFont: "'EB Garamond', Georgia, serif",
+    subtitleWeight: 400,
+    subtitleStyle: "italic",
+    subtitleColor: "rgba(245,239,224,0.88)",
+    authorFont: "'EB Garamond', Georgia, serif",
     accentBar: "#c0392b",
     overlayStrong: "rgba(5,0,15,0.88)",
     overlayLight: "rgba(5,0,15,0.42)",
@@ -177,8 +247,9 @@ function layoutFullImage(opts: {
     : `<div style="position:absolute;inset:0;background:linear-gradient(160deg,${gc1},${gc2})"></div>`;
 
   const fontSize = title.length > 20 ? "38pt" : title.length > 14 ? "46pt" : "54pt";
+  const titleFx = `color:${g.titleColor};-webkit-text-stroke:${g.titleStroke};paint-order:stroke fill;text-shadow:${g.titleShadow}`;
 
-  return `<!doctype html><html><head><meta charset="utf-8"><style>
+  return `<!doctype html><html><head><meta charset="utf-8">${FONT_LINKS}<style>
     *{margin:0;padding:0;box-sizing:border-box}
     html,body{width:100%;height:100%;overflow:hidden}
     .cover{position:relative;width:100vw;height:100vh;overflow:hidden;font-family:${g.titleFont}}
@@ -190,8 +261,8 @@ function layoutFullImage(opts: {
     /* Title block sits in the TOP safe zone */
     .title-block{position:absolute;left:0;right:0;top:0;padding:0.55in 0.5in 0.3in}
     .accent-bar{width:2.2in;height:4px;background:${accentColor};margin-bottom:0.16in;border-radius:2px}
-    .title{font-size:${fontSize};font-weight:${g.titleWeight};line-height:1.05;letter-spacing:${g.titleTracking};text-transform:${g.titleTransform};color:#fff;text-shadow:0 2px 16px rgba(0,0,0,0.7),0 1px 3px rgba(0,0,0,0.9)}
-    .subtitle{margin-top:0.13in;font-size:14pt;font-weight:400;font-family:${g.subtitleFont};color:rgba(255,255,255,0.92);text-shadow:0 1px 8px rgba(0,0,0,0.8);letter-spacing:0.02em}
+    .title{font-size:${fontSize};font-weight:${g.titleWeight};line-height:1.05;letter-spacing:${g.titleTracking};text-transform:${g.titleTransform};${titleFx}}
+    .subtitle{margin-top:0.13in;font-size:14pt;font-weight:${g.subtitleWeight};font-style:${g.subtitleStyle};font-family:${g.subtitleFont};color:${g.subtitleColor};text-shadow:0 1px 8px rgba(0,0,0,0.8);letter-spacing:0.02em}
 
     /* Author block in the BOTTOM safe zone */
     .author-block{position:absolute;left:0;right:0;bottom:0;padding:0 0.5in 0.55in}
@@ -241,8 +312,9 @@ function layoutTypographyFirst(opts: {
     : (title.length > 20 ? "42pt" : title.length > 12 ? "52pt" : "64pt");
   // In the slim artwork banner, drop the in-band subtitle line to avoid crowding.
   const showSubtitle = Boolean(subtitle) && (!artwork) && !(subtitle && subtitle.length > 40);
+  const titleFx = `color:${g.titleColor};-webkit-text-stroke:${g.titleStroke};paint-order:stroke fill;text-shadow:${g.titleShadow}`;
 
-  return `<!doctype html><html><head><meta charset="utf-8"><style>
+  return `<!doctype html><html><head><meta charset="utf-8">${FONT_LINKS}<style>
     *{margin:0;padding:0;box-sizing:border-box}
     html,body{width:100%;height:100%;overflow:hidden}
     .cover{position:relative;width:100vw;height:100vh;overflow:hidden;font-family:${g.titleFont}}
@@ -258,9 +330,9 @@ function layoutTypographyFirst(opts: {
     /* Text block inside the banner */
     .title-block{position:absolute;left:0;right:0;top:0;padding:0.42in 0.5in 0;z-index:3}
     .genre-label{font-size:9pt;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:${accentColor};margin-bottom:0.12in;font-family:${g.authorFont}}
-    .title{font-size:${fontSize};font-weight:${g.titleWeight};line-height:1.02;letter-spacing:${g.titleTracking};text-transform:${g.titleTransform};color:#fff;text-shadow:none}
+    .title{font-size:${fontSize};font-weight:${g.titleWeight};line-height:1.02;letter-spacing:${g.titleTracking};text-transform:${g.titleTransform};${titleFx}}
     .accent-rule{width:100%;height:3px;background:linear-gradient(90deg,${accentColor},transparent);margin:0.16in 0 0.12in;border-radius:2px}
-    .subtitle{font-size:13pt;font-weight:400;font-family:${g.subtitleFont};color:rgba(255,255,255,0.88);letter-spacing:0.01em;line-height:1.4}
+    .subtitle{font-size:13pt;font-weight:${g.subtitleWeight};font-style:${g.subtitleStyle};font-family:${g.subtitleFont};color:${g.subtitleColor};letter-spacing:0.01em;line-height:1.4}
 
     /* Author at the bottom of the banner */
     .author-block{position:absolute;left:0.5in;right:0.5in;top:${authorTop}%;transform:translateY(-100%);z-index:3;padding-bottom:0.16in}
@@ -300,6 +372,7 @@ function layoutModernCommercial(opts: {
   const [gc1, gc2] = GENRE_GRADIENTS[genre];
   const band = GENRE_BANDS[genre].modern;
   const artwork = isArtworkDominant(genre);
+  const titleFx = `color:${g.titleColor};-webkit-text-stroke:${g.titleStroke};paint-order:stroke fill;text-shadow:${g.titleShadow}`;
   const bgLayer = bg.kind === "image"
     ? `<img src="${bg.dataUri}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center ${artwork ? "55%" : "60%"}">`
     : `<div style="position:absolute;inset:0;background:linear-gradient(160deg,${gc1},${gc2})"></div>`;
@@ -308,7 +381,7 @@ function layoutModernCommercial(opts: {
     // Artwork-dominant: full-bleed art with a compact floating title CARD near the top
     // and a slim author bar at the bottom. The hero keeps ~70% of the cover.
     const fontSize = title.length > 22 ? "30pt" : title.length > 14 ? "38pt" : "46pt";
-    return `<!doctype html><html><head><meta charset="utf-8"><style>
+    return `<!doctype html><html><head><meta charset="utf-8">${FONT_LINKS}<style>
     *{margin:0;padding:0;box-sizing:border-box}
     html,body{width:100%;height:100%;overflow:hidden}
     .cover{position:relative;width:100vw;height:100vh;overflow:hidden;font-family:${g.titleFont}}
@@ -317,8 +390,8 @@ function layoutModernCommercial(opts: {
     /* Floating title card — solid for full thumbnail legibility, with an accent base rule */
     .title-card{position:absolute;left:0.32in;right:0.32in;top:0.34in;background:${band};border-radius:14px;
       border-bottom:5px solid ${accentColor};padding:0.26in 0.3in;z-index:3;box-shadow:0 6px 22px rgba(0,0,0,0.35)}
-    .title{font-size:${fontSize};font-weight:${g.titleWeight};line-height:1.04;letter-spacing:${g.titleTracking};text-transform:${g.titleTransform};color:#fff;text-align:center}
-    .subtitle{margin-top:0.08in;font-size:11pt;font-weight:400;font-family:${g.subtitleFont};color:rgba(255,255,255,0.9);letter-spacing:0.01em;text-align:center}
+    .title{font-size:${fontSize};font-weight:${g.titleWeight};line-height:1.04;letter-spacing:${g.titleTracking};text-transform:${g.titleTransform};${titleFx};text-align:center}
+    .subtitle{margin-top:0.08in;font-size:11pt;font-weight:${g.subtitleWeight};font-style:${g.subtitleStyle};font-family:${g.subtitleFont};color:${g.subtitleColor};letter-spacing:0.01em;text-align:center}
 
     /* Slim author bar at the very bottom */
     .bottom-band{position:absolute;left:0;right:0;bottom:0;height:10%;background:${band};z-index:2}
@@ -342,7 +415,7 @@ function layoutModernCommercial(opts: {
 
   // Typography-dominant: the title leads via a thick top band; artwork supports below.
   const fontSize = title.length > 22 ? "36pt" : title.length > 14 ? "44pt" : "54pt";
-  return `<!doctype html><html><head><meta charset="utf-8"><style>
+  return `<!doctype html><html><head><meta charset="utf-8">${FONT_LINKS}<style>
     *{margin:0;padding:0;box-sizing:border-box}
     html,body{width:100%;height:100%;overflow:hidden}
     .cover{position:relative;width:100vw;height:100vh;overflow:hidden;font-family:${g.titleFont}}
@@ -364,8 +437,8 @@ function layoutModernCommercial(opts: {
 
     /* Title inside top band */
     .title-block{position:absolute;left:0;right:0;top:0;height:38%;display:flex;flex-direction:column;justify-content:center;padding:0.2in 0.45in;z-index:4}
-    .title{font-size:${fontSize};font-weight:${g.titleWeight};line-height:1.04;letter-spacing:${g.titleTracking};text-transform:${g.titleTransform};color:#fff}
-    .subtitle{margin-top:0.1in;font-size:12pt;font-weight:400;font-family:${g.subtitleFont};color:rgba(255,255,255,0.85);letter-spacing:0.01em}
+    .title{font-size:${fontSize};font-weight:${g.titleWeight};line-height:1.04;letter-spacing:${g.titleTracking};text-transform:${g.titleTransform};${titleFx}}
+    .subtitle{margin-top:0.1in;font-size:12pt;font-weight:${g.subtitleWeight};font-style:${g.subtitleStyle};font-family:${g.subtitleFont};color:${g.subtitleColor};letter-spacing:0.01em}
 
     /* Author inside bottom band */
     .author-block{position:absolute;left:0;right:0;bottom:0;height:14%;display:flex;align-items:center;padding:0 0.45in;z-index:4}
