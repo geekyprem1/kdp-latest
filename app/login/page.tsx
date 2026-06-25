@@ -4,9 +4,11 @@ import { useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [sent, setSent] = useState(false);
-  const [busy, setBusy] = useState<"google" | "email" | null>(null);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function client() {
@@ -18,42 +20,41 @@ export default function LoginPage() {
     }
   }
 
-  // Auth redirect base. Prefer the public env (works in OAuth/magic-link emails
-  // even if the user starts the flow from localhost or a preview domain); fall
-  // back to the browser origin when unset (dev / unconfigured).
+  // Auth redirect base. Prefer the public env (works in confirmation emails even
+  // if the user starts the flow from localhost or a preview domain); fall back to
+  // the browser origin when unset (dev / unconfigured).
   const authBase =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ||
     (typeof window !== "undefined" ? window.location.origin : "");
   const callback = `${authBase}/auth/callback?next=/dashboard`;
 
-  async function google() {
-    setError(null);
-    setBusy("google");
-    const supabase = client();
-    if (!supabase) return setBusy(null);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: callback },
-    });
-    if (error) {
-      setError(error.message);
-      setBusy(null);
-    }
-  }
-
-  async function emailLink(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setBusy("email");
+    setBusy(true);
     const supabase = client();
-    if (!supabase) return setBusy(null);
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: callback },
-    });
-    setBusy(null);
-    if (error) setError(error.message);
-    else setSent(true);
+    if (!supabase) return setBusy(false);
+
+    if (mode === "signup") {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: callback },
+      });
+      setBusy(false);
+      if (error) return setError(error.message);
+      // If email confirmation is on, there's no active session yet.
+      if (!data.session) return setSent(true);
+      window.location.href = "/dashboard";
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      setBusy(false);
+      if (error) return setError(error.message);
+      window.location.href = "/dashboard";
+    }
   }
 
   return (
@@ -113,38 +114,22 @@ export default function LoginPage() {
         </div>
 
         <div className="w-full max-w-sm">
-          <h1 className="text-2xl font-bold text-neutral-900">Welcome back</h1>
+          <h1 className="text-2xl font-bold text-neutral-900">
+            {mode === "signup" ? "Create your account" : "Welcome back"}
+          </h1>
           <p className="mt-1 text-sm text-neutral-500">
-            Sign in to continue building your KDP business.
+            {mode === "signup"
+              ? "Sign up to start building your KDP business."
+              : "Sign in to continue building your KDP business."}
           </p>
 
-          {/* Google */}
-          <button
-            onClick={google}
-            disabled={busy !== null}
-            className="mt-8 flex w-full items-center justify-center gap-3 rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 shadow-sm hover:bg-neutral-50 disabled:opacity-50 transition-colors"
-          >
-            <svg width="18" height="18" viewBox="0 0 48 48" fill="none">
-              <path fill="#4285F4" d="M47.5 24.6c0-1.6-.1-3.2-.4-4.7H24v9h13.1c-.6 3-2.3 5.5-4.9 7.2v6h7.9c4.6-4.3 7.4-10.6 7.4-17.5z"/>
-              <path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.9-6c-2.1 1.4-4.9 2.3-8 2.3-6.1 0-11.3-4.1-13.2-9.7H2.6v6.2C6.5 42.6 14.7 48 24 48z"/>
-              <path fill="#FBBC05" d="M10.8 28.8A14.5 14.5 0 0 1 10 24c0-1.7.3-3.3.8-4.8v-6.2H2.6A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l8.2-6z"/>
-              <path fill="#EA4335" d="M24 9.5c3.4 0 6.5 1.2 8.9 3.5l6.6-6.6C35.9 2.6 30.5.5 24 .5 14.7.5 6.5 5.9 2.6 13.2l8.2 6.2C12.7 13.6 17.9 9.5 24 9.5z"/>
-            </svg>
-            {busy === "google" ? "Redirecting…" : "Continue with Google"}
-          </button>
-
-          <div className="my-5 flex items-center gap-3">
-            <div className="h-px flex-1 bg-neutral-200" />
-            <span className="text-xs text-neutral-400">or</span>
-            <div className="h-px flex-1 bg-neutral-200" />
-          </div>
-
           {sent ? (
-            <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
-              Check your inbox — we sent a magic sign-in link to <strong>{email}</strong>.
+            <div className="mt-8 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+              Almost there — we sent a confirmation link to <strong>{email}</strong>.
+              Click it to activate your account, then sign in.
             </div>
           ) : (
-            <form onSubmit={emailLink} className="space-y-3">
+            <form onSubmit={submit} className="mt-8 space-y-3">
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-neutral-600">
                   Email address
@@ -158,21 +143,54 @@ export default function LoginPage() {
                   className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm text-neutral-900 placeholder-neutral-400 shadow-sm focus:border-neutral-500 focus:outline-none"
                 />
               </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-neutral-600">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                  className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm text-neutral-900 placeholder-neutral-400 shadow-sm focus:border-neutral-500 focus:outline-none"
+                />
+              </div>
               <button
                 type="submit"
-                disabled={busy !== null}
+                disabled={busy}
                 className="w-full rounded-lg bg-black px-4 py-2.5 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-50 transition-colors"
               >
-                {busy === "email" ? "Sending…" : "Send me a sign-in link"}
+                {busy
+                  ? mode === "signup"
+                    ? "Creating account…"
+                    : "Signing in…"
+                  : mode === "signup"
+                    ? "Create account"
+                    : "Sign in"}
               </button>
             </form>
           )}
 
           {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
-          <p className="mt-8 text-center text-xs text-neutral-400">
-            No password required. We&apos;ll email you a secure link.
-          </p>
+          {!sent && (
+            <p className="mt-8 text-center text-xs text-neutral-500">
+              {mode === "signup" ? "Already have an account?" : "Don't have an account?"}{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setMode(mode === "signup" ? "signin" : "signup");
+                  setError(null);
+                }}
+                className="font-semibold text-neutral-900 underline underline-offset-2 hover:text-black"
+              >
+                {mode === "signup" ? "Sign in" : "Sign up"}
+              </button>
+            </p>
+          )}
         </div>
       </div>
 
